@@ -1,0 +1,35 @@
+{
+  "name": "resume-optimizer",
+  "version": "1.0.0",
+  "private": true,
+  "scripts": {
+    "dev": "next dev",
+    "build": "next build",
+    "start": "next start",
+    "lint": "next lint",
+    "postinstall": "node scripts/install-chrome.js"
+  },
+  "dependencies": {
+    "html-docx-js-typescript": "^0.1.5",
+    "latex.js": "^0.12.6",  
+    "mammoth": "^1.9.0",
+    "mongoose": "^8.13.2",
+    "next": "^15.3.2",
+    "pdf-parse": "^1.1.1",
+    "puppeteer": "^24.8.2",
+    "react": "^19.1.0",
+    "react-dom": "^19.1.0",
+    "tesseract.js": "^6.0.1",
+    "uuid": "^11.1.0"
+  },
+  "devDependencies": {
+    "@types/node": "^22.15.3",
+    "@types/pdf-parse": "^1.1.5",
+    "@types/react": "^19.1.2",
+    "@types/react-dom": "^19.1.2",
+    "@types/uuid": "^10.0.0",
+    "eslint": "^9.25.1",
+    "eslint-config-next": "^15.3.2",
+    "typescript": "^5.8.3"
+  }
+}
