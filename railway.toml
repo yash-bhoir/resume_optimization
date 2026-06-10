@@ -1,9 +1,18 @@
 [build]
 builder = "DOCKERFILE"
 dockerfilePath = "Dockerfile"
+# Rebuild image when these change (avoids stale cached layers without Clerk env baked in)
+buildArgs = [
+  "NEXT_PUBLIC_APP_URL",
+  "NEXT_PUBLIC_CLERK_PUBLISHABLE_KEY",
+  "NEXT_PUBLIC_CLERK_SIGN_IN_URL",
+  "NEXT_PUBLIC_CLERK_SIGN_UP_URL",
+  "CACHEBUST",
+]
 
 [deploy]
 healthcheckPath = "/api/health"
 healthcheckTimeout = 120
 restartPolicyType = "ON_FAILURE"
 restartPolicyMaxRetries = 5
+# Leave empty in Railway dashboard — Dockerfile CMD runs the server

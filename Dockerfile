@@ -22,18 +22,19 @@ ARG NEXT_PUBLIC_APP_URL
 ARG NEXT_PUBLIC_CLERK_PUBLISHABLE_KEY
 ARG NEXT_PUBLIC_CLERK_SIGN_IN_URL
 ARG NEXT_PUBLIC_CLERK_SIGN_UP_URL
+ARG CACHEBUST=2026-06-10-v2
 ENV NEXT_PUBLIC_APP_URL=$NEXT_PUBLIC_APP_URL
 ENV NEXT_PUBLIC_CLERK_PUBLISHABLE_KEY=$NEXT_PUBLIC_CLERK_PUBLISHABLE_KEY
 ENV NEXT_PUBLIC_CLERK_SIGN_IN_URL=$NEXT_PUBLIC_CLERK_SIGN_IN_URL
 ENV NEXT_PUBLIC_CLERK_SIGN_UP_URL=$NEXT_PUBLIC_CLERK_SIGN_UP_URL
 ENV NODE_OPTIONS=--max-old-space-size=4096
-RUN npm run build
+RUN echo "cachebust=${CACHEBUST}" && npm run build
 
+# Railway sets PORT at runtime (e.g. 8080). Do not hardcode PORT here.
 ENV HOSTNAME=0.0.0.0
-ENV PORT=3000
-EXPOSE 3000
 
-HEALTHCHECK --interval=30s --timeout=10s --start-period=60s --retries=3 \
+HEALTHCHECK --interval=30s --timeout=10s --start-period=90s --retries=5 \
   CMD node -e "const p=process.env.PORT||3000;fetch('http://127.0.0.1:'+p+'/api/health').then(r=>process.exit(r.ok?0:1)).catch(()=>process.exit(1))"
 
-CMD ["npm", "start"]
+# Use node directly so Railway never needs `next` on PATH; bind all interfaces for the proxy
+CMD ["node", "node_modules/next/dist/bin/next", "start", "-H", "0.0.0.0"]
