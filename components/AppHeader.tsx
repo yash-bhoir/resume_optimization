@@ -43,48 +43,53 @@ export default function AppHeader({
         </Link>
 
         <nav className="header-nav" aria-label="Main">
-          <Link href="/how-it-works" className="header-link header-link--aux">
-            How it works
-          </Link>
-          <Link href="/pricing" className="header-link header-link--aux">
-            Pricing
-          </Link>
-          <Link href="/faq" className="header-link header-link--aux">
-            FAQ
-          </Link>
-          <Link href="/blog" className="header-link header-link--aux">
-            Blog
-          </Link>
-          {isLoaded && isSignedIn && (
-            <Link href="/history" className="header-link">
-              History
+          <div className="header-nav-links">
+            <Link href="/how-it-works" className="header-link header-link--aux">
+              How it works
             </Link>
-          )}
-
-          {showBack && (
-            <Link href={backHref} className="header-link">
-              ← {backLabel}
+            <Link href="/pricing" className="header-link header-link--aux">
+              Pricing
             </Link>
-          )}
+            <Link href="/faq" className="header-link header-link--aux">
+              FAQ
+            </Link>
+            <Link href="/blog" className="header-link header-link--aux">
+              Blog
+            </Link>
+            {isLoaded && isSignedIn && (
+              <Link href="/history" className="header-link">
+                History
+              </Link>
+            )}
+            {showBack && (
+              <Link href={backHref} className="header-link">
+                ← {backLabel}
+              </Link>
+            )}
+          </div>
 
-          {!showBack && (
-            <span className="header-pill header-pill--desktop">No account needed to try</span>
-          )}
+          <div className="header-nav-auth">
+            {!isSignedIn && (
+              isLoaded ? (
+                <SignInButton mode="modal">
+                  <button type="button" className="btn btn-secondary btn-sm">
+                    Sign in
+                  </button>
+                </SignInButton>
+              ) : (
+                <Link href="/sign-in" className="btn btn-secondary btn-sm">
+                  Sign in
+                </Link>
+              )
+            )}
 
-          {isLoaded && !isSignedIn && (
-            <SignInButton mode="modal">
-              <button type="button" className="btn btn-secondary btn-sm">
-                Sign in
-              </button>
-            </SignInButton>
-          )}
-
-          {isLoaded && isSignedIn && (
-            <>
-              <UsageCounter compact />
-              <UserButton />
-            </>
-          )}
+            {isLoaded && isSignedIn && (
+              <>
+                <UsageCounter compact />
+                <UserButton />
+              </>
+            )}
+          </div>
         </nav>
       </div>
     </header>
