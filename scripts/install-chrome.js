@@ -1,7 +1,15 @@
 /**
  * Installs Puppeteer's bundled Chrome if no system browser is found.
- * Skips silently when Chrome/Edge is already available.
+ * Skips silently when Chrome/Edge is already available or in Docker/production.
  */
+if (
+  process.env.PUPPETEER_SKIP_CHROMIUM_DOWNLOAD === "true" ||
+  process.env.PUPPETEER_EXECUTABLE_PATH
+) {
+  console.log("Puppeteer browser download skipped (system Chromium configured).");
+  process.exit(0);
+}
+
 const { existsSync } = require("fs");
 const { homedir } = require("os");
 const { join } = require("path");

@@ -13,7 +13,8 @@ ENV NODE_ENV=production
 WORKDIR /app
 
 COPY package.json package-lock.json ./
-RUN npm ci
+# postinstall runs install-chrome.js — skip here; Chromium is installed via apt above
+RUN npm ci --ignore-scripts
 
 COPY . .
 RUN npm run build
