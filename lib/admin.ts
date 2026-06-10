@@ -1,5 +1,5 @@
 import { auth, currentUser } from "@clerk/nextjs/server";
-import { jsonError } from "./api-response";
+import { jsonError } from "./api-errors";
 
 function getAdminEmails(): string[] {
   const raw =

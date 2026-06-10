@@ -8,7 +8,9 @@ function isChunkLoadError(message: string): boolean {
   return (
     message.includes("ChunkLoadError") ||
     message.includes("Loading chunk") ||
-    message.includes("Failed to fetch dynamically imported module")
+    message.includes("Failed to fetch dynamically imported module") ||
+    message.includes("__webpack_modules__") ||
+    message.includes("is not a function")
   );
 }
 

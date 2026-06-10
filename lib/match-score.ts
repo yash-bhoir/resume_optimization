@@ -178,14 +178,3 @@ export function calculateMatchScore(jobDescription: string, resumeText: string):
   return Math.min(100, Math.round((matched / jdKeywords.length) * 100));
 }
 
-export function generateFallbackChangeLog(
-  originalText: string,
-  optimizedLatex: string,
-  jobDescription: string
-): string[] {
-  const { generateChangeLog, generateChangeLogSummaries } =
-    require("./resume-diff") as typeof import("./resume-diff");
-  return generateChangeLogSummaries(
-    generateChangeLog(originalText, optimizedLatex, jobDescription)
-  );
-}

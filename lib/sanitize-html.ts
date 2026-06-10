@@ -50,17 +50,9 @@ function stripDangerousHtml(html: string): string {
 }
 
 export function sanitizeHtml(html: string): string {
-  if (typeof window === "undefined") {
-    return stripDangerousHtml(html);
-  }
-  // Client sync path: module already loaded by dynamic imports in preview components
-  // eslint-disable-next-line -- sync client path uses require after dynamic import elsewhere
-  const DOMPurify = require("isomorphic-dompurify").default as DomPurifyLike;
-  return DOMPurify.sanitize(html, {
-    ALLOWED_TAGS,
-    ALLOWED_ATTR,
-    ALLOW_DATA_ATTR: true,
-  });
+  // Sync path for SSR and client — we only sanitize HTML we generate in-app.
+  // Avoid sync require() of isomorphic-dompurify (breaks Webpack client bundles).
+  return stripDangerousHtml(html);
 }
 
 export async function sanitizeHtmlAsync(html: string): Promise<string> {

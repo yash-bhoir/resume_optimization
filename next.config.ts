@@ -93,15 +93,11 @@ const nextConfig: NextConfig = {
       },
     ];
   },
-  webpack: (config, { dev }) => {
+  webpack: (config) => {
     config.resolve.alias = {
       ...config.resolve.alias,
       canvas: false,
     };
-    // Prevent corrupted pack cache from breaking CSS chunks in dev (common on Windows paths with spaces)
-    if (dev) {
-      config.cache = false;
-    }
     return config;
   },
 };

@@ -4,10 +4,9 @@ import {
   calculateMatchScore,
   calibrateOptimizedMatchScore,
   calibrateOptimizedAtsScore,
-  generateFallbackChangeLog,
 } from "@/lib/match-score";
 import { calculateAtsScore, calculateOptimizationGain } from "@/lib/ats-score";
-import { generateChangeLog } from "@/lib/resume-diff";
+import { generateChangeLog, generateFallbackChangeLog } from "@/lib/change-log";
 import { estimatePageFitFromLatex } from "@/lib/page-fit";
 import { analyzeResume } from "@/lib/resume-analysis";
 import { withCategoryScores } from "@/lib/category-scores";
