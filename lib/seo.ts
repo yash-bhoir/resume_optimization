@@ -45,7 +45,8 @@ export const PAGE_TITLES = {
 } as const;
 
 export function getBaseUrl(): string {
-  const url = process.env.NEXT_PUBLIC_APP_URL?.trim() || "https://resumeoptimizer.app";
+  const url =
+    process.env.NEXT_PUBLIC_APP_URL?.trim() || "https://resumefit.up.railway.app";
   return url.replace(/\/$/, "");
 }
 

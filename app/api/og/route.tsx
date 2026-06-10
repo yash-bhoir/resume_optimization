@@ -85,7 +85,7 @@ export async function GET(request: NextRequest) {
           <span style={{ color: "#A8D4BC", fontSize: 20 }}>
             Free ATS Resume Checker · Resume Optimizer
           </span>
-          <span style={{ color: "#63656E", fontSize: 18 }}>resumefit.app</span>
+          <span style={{ color: "#63656E", fontSize: 18 }}>resumefit.up.railway.app</span>
         </div>
       </div>
     ),
