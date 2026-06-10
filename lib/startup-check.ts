@@ -35,6 +35,11 @@ export function validateStartupEnv(): StartupValidationResult {
   if (hasClerkKey !== hasClerkSecret) {
     warnings.push("Clerk keys are partially configured — auth may not work");
   }
+  if (env === "production" && !hasClerkKey && !hasClerkSecret) {
+    warnings.push(
+      "Clerk keys not set — /sign-in and /sign-up will show an unavailable message"
+    );
+  }
   if (env === "production" && hasClerkKey) {
     for (const key of REQUIRED_WHEN_CLERK) {
       if (!process.env[key]?.trim()) {

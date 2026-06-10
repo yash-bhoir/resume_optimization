@@ -2,17 +2,22 @@ import type { NextConfig } from "next";
 
 const isDev = process.env.NODE_ENV === "development";
 
+// Clerk FAPI uses *.accounts.dev (e.g. grateful-husky-37.accounts.dev) — see clerk.com/docs/guides/secure/best-practices/csp-headers
+const clerkOrigins =
+  "https://*.accounts.dev https://*.clerk.accounts.dev https://*.clerk.com https://img.clerk.com https://clerk-telemetry.com https://*.clerk-telemetry.com";
+
 const cspDirectives = [
   "default-src 'self'",
-  `script-src 'self' 'unsafe-inline'${isDev ? " 'unsafe-eval'" : ""} https://www.googletagmanager.com https://www.google-analytics.com https://*.clerk.accounts.dev https://*.clerk.com https://challenges.cloudflare.com`,
+  `script-src 'self' 'unsafe-inline'${isDev ? " 'unsafe-eval'" : ""} https://www.googletagmanager.com https://www.google-analytics.com ${clerkOrigins} https://challenges.cloudflare.com`,
   "style-src 'self' 'unsafe-inline'",
-  "img-src 'self' data: blob: https:",
+  "img-src 'self' data: blob: https://img.clerk.com https:",
   "font-src 'self' data:",
-  "connect-src 'self' https://api.openai.com https://*.clerk.accounts.dev https://*.clerk.com https://www.google-analytics.com https://*.upstash.io",
-  "frame-src 'self' blob: https://*.clerk.accounts.dev https://*.clerk.com https://challenges.cloudflare.com",
+  `connect-src 'self' https://api.openai.com ${clerkOrigins} https://www.google-analytics.com https://*.upstash.io`,
+  `frame-src 'self' blob: ${clerkOrigins} https://challenges.cloudflare.com`,
+  "worker-src 'self' blob:",
   "object-src 'none'",
   "base-uri 'self'",
-  "form-action 'self'",
+  `form-action 'self' ${clerkOrigins}`,
   "frame-ancestors 'none'",
   ...(isDev ? [] : ["upgrade-insecure-requests"]),
 ].join("; ");
@@ -48,6 +53,12 @@ const nextConfig: NextConfig = {
       { protocol: "https", hostname: "resumefit.up.railway.app" },
       { protocol: "https", hostname: "*.up.railway.app" },
     ],
+  },
+  async rewrites() {
+    return [
+      { source: "/icon-192.png", destination: "/api/pwa-icon?size=192" },
+      { source: "/icon-512.png", destination: "/api/pwa-icon?size=512" },
+    ];
   },
   async headers() {
     return [

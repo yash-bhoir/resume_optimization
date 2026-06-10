@@ -1,23 +1,22 @@
-import { SignIn } from "@clerk/nextjs";
+import { Suspense } from "react";
+import AuthUnavailable from "@/components/AuthUnavailable";
+import SignInForm from "@/components/SignInForm";
+import { isClerkConfigured } from "@/lib/clerk-env";
 
-type SignInPageProps = {
-  searchParams: Promise<{ redirect_url?: string }>;
-};
-
-function safeRedirectPath(value: string | undefined): string {
-  if (!value?.startsWith("/") || value.startsWith("//")) return "/";
-  return value;
-}
-
-export default async function SignInPage({ searchParams }: SignInPageProps) {
-  const { redirect_url: redirectUrl } = await searchParams;
+export default function SignInPage() {
+  if (!isClerkConfigured()) {
+    return <AuthUnavailable />;
+  }
 
   return (
-    <div className="auth-page">
-      <SignIn
-        fallbackRedirectUrl={safeRedirectPath(redirectUrl)}
-        signUpUrl="/sign-up"
-      />
-    </div>
+    <Suspense
+      fallback={
+        <div className="auth-page">
+          <p>Loading sign in…</p>
+        </div>
+      }
+    >
+      <SignInForm />
+    </Suspense>
   );
 }

@@ -1,3 +1,4 @@
+import { isClerkConfigured } from "@/lib/clerk-env";
 import { connectDB } from "@/lib/mongodb";
 import { ensureUserIndexes } from "@/lib/models/User";
 import { isUpstashConfigured } from "@/lib/rate-limit";
@@ -15,6 +16,7 @@ function openAiKeyStatus(): string {
 
 export async function GET() {
   const checks: Record<string, string | number> = {
+    clerk: isClerkConfigured() ? "ok" : "missing_keys",
     openai: openAiKeyStatus(),
     mongodb: "skipped",
     chrome: resolveBrowserExecutable() ? "ok" : "missing",

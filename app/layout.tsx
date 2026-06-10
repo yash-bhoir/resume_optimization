@@ -90,7 +90,12 @@ export default function RootLayout({
   children: React.ReactNode;
 }>) {
   return (
-    <ClerkProvider>
+    <ClerkProvider
+      signInUrl="/sign-in"
+      signUpUrl="/sign-up"
+      signInFallbackRedirectUrl="/"
+      signUpFallbackRedirectUrl="/"
+    >
       <html lang="en" className={`${outfit.variable} ${plex.variable}`} suppressHydrationWarning>
         <head>
           {googleVerification ? (
@@ -101,6 +106,7 @@ export default function RootLayout({
           <link rel="dns-prefetch" href="https://www.googletagmanager.com" />
           <link rel="dns-prefetch" href="https://www.google-analytics.com" />
           <link rel="dns-prefetch" href="https://img.clerk.com" />
+          <link rel="dns-prefetch" href="https://clerk.accounts.dev" />
         </head>
         <body suppressHydrationWarning>
           <ChunkLoadRecovery />

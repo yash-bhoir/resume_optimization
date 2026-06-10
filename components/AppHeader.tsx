@@ -1,7 +1,7 @@
 "use client";
 
 import Link from "next/link";
-import { useAuth, SignInButton, UserButton } from "@clerk/nextjs";
+import { useAuth, UserButton } from "@clerk/nextjs";
 import UsageCounter from "@/components/UsageCounter";
 
 interface AppHeaderProps {
@@ -70,17 +70,9 @@ export default function AppHeader({
 
           <div className="header-nav-auth">
             {!isSignedIn && (
-              isLoaded ? (
-                <SignInButton mode="modal">
-                  <button type="button" className="btn btn-secondary btn-sm">
-                    Sign in
-                  </button>
-                </SignInButton>
-              ) : (
-                <Link href="/sign-in" className="btn btn-secondary btn-sm">
-                  Sign in
-                </Link>
-              )
+              <Link href="/sign-in" className="btn btn-secondary btn-sm">
+                Sign in
+              </Link>
             )}
 
             {isLoaded && isSignedIn && (
