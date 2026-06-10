@@ -89,9 +89,9 @@ export function runStartupCheck(): void {
     for (const error of result.errors) {
       console.error(`[startup] ${error}`);
     }
-    if (process.env.NODE_ENV === "production") {
-      process.exit(1);
-    }
+    console.error(
+      "[startup] Server will still start — check /api/health and Railway deploy logs"
+    );
   } else {
     console.info(
       `[startup] Resume Optimizer ready (${result.environment}) — ${result.warnings.length} warning(s)`

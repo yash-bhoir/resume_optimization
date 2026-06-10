@@ -7,7 +7,7 @@
     "dev:clean": "node -e \"try{require('fs').rmSync('.next',{recursive:true,force:true})}catch(e){}\" && next dev",
     "build": "next build",
     "postbuild": "node -e \"if(process.env.NEXT_PUBLIC_APP_URL){require('child_process').execSync('next-sitemap',{stdio:'inherit'})}\"",
-    "start": "next start",
+    "start": "next start -H 0.0.0.0",
     "lint": "next lint",
     "test:connections": "node scripts/test-connections.mjs",
     "test": "vitest run",
