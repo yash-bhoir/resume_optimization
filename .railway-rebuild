@@ -1,0 +1,3 @@
+# Bumped to force Railway to fetch a new GitHub snapshot (not a cached deploy).
+# Safe to delete after production is healthy.
+2026-06-10T16:30:00Z
