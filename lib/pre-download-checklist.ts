@@ -18,17 +18,24 @@ export function buildPreDownloadChecklist(
     critical: true,
   });
 
+  const expMetric =
+    analysis.experienceMeasurablePercent ?? analysis.measurablePercent;
+  const missingCount = analysis.bulletsMissingMetrics?.length ?? 0;
+
   items.push({
     id: "metrics",
-    label: `Bullets include measurable results (${analysis.measurablePercent}%)`,
-    pass: analysis.measurablePercent >= 75,
-    tip: "Add %, scale, or numbers to every experience bullet",
+    label: `Experience bullets quantified (${expMetric}%)`,
+    pass: missingCount === 0 && expMetric === 100,
+    tip:
+      missingCount > 0
+        ? `${missingCount} experience bullet(s) still need numbers — see Quantify impact panel`
+        : "Add %, team size, or scale to every experience bullet",
     critical: true,
   });
 
   items.push({
     id: "repetition",
-    label: "No over-repeated action verbs",
+    label: "No over-repeated action verbs (max 2 each)",
     pass: analysis.repetitionWarnings.length === 0,
     tip:
       analysis.repetitionWarnings.length > 0

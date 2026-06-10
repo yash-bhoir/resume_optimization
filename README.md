@@ -6,9 +6,20 @@ AI-powered resume tailoring app that optimizes your resume for a specific job de
 ![TypeScript](https://img.shields.io/badge/TypeScript-5.8-blue)
 ![OpenAI](https://img.shields.io/badge/OpenAI-GPT--4o--mini-green)
 
+## Dual optimization modes
+
+| Mode | Best for | What changes |
+|------|----------|--------------|
+| **Keep my layout** | DOCX, LaTeX (.tex) | Content only — fonts, colors, columns stay the same |
+| **Professional template** | PDF, TXT, image, or max ATS | Jake Gutierrez LaTeX layout |
+
+- **DOCX preserve** — Original Word file styling via XML text replacement
+- **LaTeX preserve** — In-place edit of `\resumeItem`, summary, and skills
+- **PDF** — Layout preserve falls back to template (upload DOCX for exact design)
+
 ## Features
 
-- **Upload & parse** — PDF, DOCX, TXT, or image resumes (OCR via Tesseract)
+- **Upload & parse** — PDF, DOCX, TEX, TXT, or image resumes (OCR via Tesseract)
 - **Review step** — Confirm parsed content before optimization
 - **JD tailoring** — Paste a job description; keywords are injected into summary, experience, skills, and projects
 - **Professional output** — Jake Gutierrez LaTeX template (fixed layout, 2 pages OK)
@@ -75,10 +86,11 @@ OPENAI_MODEL=gpt-4o-mini
 
 ## How to Use
 
-1. **Upload** your resume (PDF recommended).
+1. **Upload** your resume (DOCX for layout preserve, PDF for template mode).
 2. Click **Parse & review resume** and confirm the extracted text is complete.
-3. **Paste the full job description** (requirements, skills, responsibilities).
-4. Click **Optimize for this job** and wait ~30–60 seconds.
+3. Choose **Keep my layout** or **Professional template**.
+4. **Paste the full job description** (requirements, skills, responsibilities).
+5. Click **Optimize for this job** and wait ~30–60 seconds.
 5. On the **results** page, review:
    - Keyword match and ATS scores (before → after)
    - Category breakdown (Content, Tailoring, Repetition, etc.)
@@ -111,7 +123,8 @@ Optimization aims to **increase** scores by:
 | `/api/parse-resume` | POST | Upload file, return extracted text |
 | `/api/optimize` | POST | Optimize resume for job description |
 | `/api/export/pdf` | POST | Generate PDF from LaTeX |
-| `/api/export/docx` | POST | Generate DOCX |
+| `/api/export/docx` | POST | Generate DOCX (from template HTML) |
+| `/api/export/docx-preserve` | POST | Download layout-preserved DOCX |
 | `/api/export/tex` | POST | Download `.tex` or `.txt` |
 | `/api/session` | GET/POST | Session persistence (optional) |
 | `/api/health` | GET | Health check |

@@ -7,20 +7,17 @@ interface ProgressIndicatorProps {
 }
 
 const STEPS = [
-  { key: "parsing", label: "Parse resume" },
-  { key: "review", label: "Review" },
-  { key: "optimizing", label: "Optimize" },
-  { key: "rendering", label: "Results" },
+  { key: "parsing", label: "Read resume" },
+  { key: "optimizing", label: "Tailor content" },
+  { key: "rendering", label: "Prepare results" },
 ] as const;
 
 function getProgress(step: OptimizeStep): number {
   switch (step) {
     case "parsing":
-      return 20;
-    case "review":
-      return 40;
+      return 25;
     case "optimizing":
-      return 70;
+      return 65;
     case "rendering":
       return 90;
     case "done":
@@ -33,15 +30,13 @@ function getProgress(step: OptimizeStep): number {
 function getLabel(step: OptimizeStep): string {
   switch (step) {
     case "parsing":
-      return "Reading your complete resume...";
-    case "review":
-      return "Review your resume before optimizing...";
+      return "Reading your resume…";
     case "optimizing":
-      return "Optimizing for job description...";
+      return "Tailoring content to the job description…";
     case "rendering":
-      return "Preparing results...";
+      return "Preparing your results…";
     case "done":
-      return "Complete!";
+      return "Resume optimized";
     default:
       return "";
   }
@@ -54,12 +49,12 @@ export default function ProgressIndicator({ step }: ProgressIndicatorProps) {
   const currentIdx = STEPS.findIndex((s) => s.key === step);
 
   return (
-    <div className="progress">
+    <div className="progress" role="progressbar" aria-valuenow={progress} aria-valuemin={0} aria-valuemax={100}>
       <div className="progress-label">{getLabel(step)}</div>
       <div className="progress-bar">
         <div className="progress-fill" style={{ width: `${progress}%` }} />
       </div>
-      <div className="progress-steps">
+      <div className="progress-steps" aria-hidden>
         {STEPS.map((s, i) => (
           <span
             key={s.key}

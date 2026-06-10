@@ -1,3 +1,5 @@
+import { sanitizeUrl, sanitizeHtml } from "./sanitize-html";
+
 export function escapeHtml(text: string): string {
   return text
     .replace(/&/g, "&amp;")
@@ -28,7 +30,10 @@ function formatInlineLatex(text: string): string {
   }
 
   return result
-    .replace(/\\href\{([^}]*)\}\{([^}]*)\}/g, '<a href="$1">$2</a>')
+    .replace(/\\href\{([^}]*)\}\{([^}]*)\}/g, (_, url: string, label: string) => {
+      const safeUrl = sanitizeUrl(url);
+      return `<a href="${escapeHtml(safeUrl)}" rel="noopener noreferrer">${escapeHtml(label)}</a>`;
+    })
     .replace(/\\underline\{([^}]*)\}/g, "$1")
     .replace(/\\%/g, "%")
     .replace(/\\scshape/g, "")
@@ -115,8 +120,8 @@ function renderHeader(body: string): string {
   const contact = contactParts.join('<span class="pipe-sep"> | </span>');
 
   return `<div class="resume-header" data-latex-block="header">
-    <div class="resume-name">${name}</div>
-    ${contact ? `<div class="resume-contact">${contact}</div>` : ""}
+    <div class="resume-name" data-field="name">${name}</div>
+    ${contact ? `<div class="resume-contact" data-field="contact">${contact}</div>` : ""}
   </div>`;
 }
 
@@ -257,17 +262,23 @@ export function latexToHtml(latexSource: string): string {
     html += renderSection(sectionParts[i], sectionParts[i + 1] || "");
   }
 
-  return html || `<pre class="resume-fallback">${escapeHtml(body.slice(0, 5000))}</pre>`;
+  const rawHtml = html || `<pre class="resume-fallback">${escapeHtml(body.slice(0, 5000))}</pre>`;
+  return sanitizeHtml(rawHtml);
 }
 
 export function htmlToPlainText(html: string): string {
   return html
     .replace(/<br\s*\/?>/gi, "\n")
+    .replace(/<\/h2>/gi, "\n")
+    .replace(/<\/li>/gi, "\n")
+    .replace(/<\/p>/gi, "\n")
+    .replace(/<\/div>/gi, "\n")
     .replace(/<[^>]+>/g, "")
     .replace(/&amp;/g, "&")
     .replace(/&lt;/g, "<")
     .replace(/&gt;/g, ">")
     .replace(/&quot;/g, '"')
+    .replace(/[ \t]+\n/g, "\n")
     .replace(/\n{3,}/g, "\n\n")
     .trim();
 }

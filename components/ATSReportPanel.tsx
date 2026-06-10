@@ -20,11 +20,17 @@ function gradeClass(grade: ResumeAnalysis["grade"]): string {
   }
 }
 
+function gradeLabel(grade: ResumeAnalysis["grade"]): string {
+  return grade.charAt(0) + grade.slice(1).toLowerCase();
+}
+
 function ScoreRing({ score, label, variant }: { score: number; label: string; variant?: "after" }) {
   return (
     <div className={`score-ring ${variant || ""}`}>
       <span className="score-ring-label">{label}</span>
-      <div className="score-ring-value">{score}</div>
+      <div className="score-ring-value" aria-label={`${label}: ${score} out of 100`}>
+        {score}
+      </div>
       <span className="score-ring-sub">out of 100</span>
     </div>
   );
@@ -34,12 +40,13 @@ export default function ATSReportPanel({ before, after }: ATSReportPanelProps) {
   const sections = ["Contact", "Summary", "Experience", "Skills", "Education", "Content"];
   const issuesFixed = Math.max(0, before.issueCount - after.issueCount);
   const openIssues = after.issues.filter((i) => i.severity !== "good");
+  const passedCount = after.issues.filter((i) => i.severity === "good").length;
 
   return (
     <div className="ats-report">
       <div className="ats-report-header">
         <h2>Resume check report</h2>
-        <span className={`ats-grade ${gradeClass(after.grade)}`}>{after.grade}</span>
+        <span className={`ats-grade ${gradeClass(after.grade)}`}>{gradeLabel(after.grade)}</span>
       </div>
 
       <div className="ats-score-compare">
@@ -51,20 +58,20 @@ export default function ATSReportPanel({ before, after }: ATSReportPanelProps) {
       <div className="ats-stats-row">
         <div className="ats-stat">
           <span className="ats-stat-value">{after.issueCount}</span>
-          <span className="ats-stat-label">Issues left</span>
+          <span className="ats-stat-label">Open issues</span>
         </div>
         <div className="ats-stat">
           <span className="ats-stat-value">{after.measurablePercent}%</span>
           <span className="ats-stat-label">Bullets with metrics</span>
         </div>
         <div className="ats-stat">
-          <span className="ats-stat-value">{issuesFixed > 0 ? `-${issuesFixed}` : "0"}</span>
-          <span className="ats-stat-label">Issues fixed</span>
+          <span className="ats-stat-value">{issuesFixed > 0 ? issuesFixed : "—"}</span>
+          <span className="ats-stat-label">Issues resolved</span>
         </div>
       </div>
 
       <div className="ats-section-issues">
-        <h3>By section</h3>
+        <h3>Issues by section</h3>
         <div className="section-issue-grid">
           {sections.map((section) => {
             const beforeCount = before.sectionIssues[section] || 0;
@@ -87,7 +94,7 @@ export default function ATSReportPanel({ before, after }: ATSReportPanelProps) {
 
       {openIssues.length > 0 && (
         <div className="ats-suggestions">
-          <h3>Suggestions</h3>
+          <h3>What to fix next</h3>
           <ul className="ats-issue-list">
             {openIssues.slice(0, 6).map((issue, idx) => (
               <li
@@ -105,9 +112,9 @@ export default function ATSReportPanel({ before, after }: ATSReportPanelProps) {
         </div>
       )}
 
-      {after.issues.filter((i) => i.severity === "good").length > 0 && (
-        <p className="ats-issue ats-issue-good" style={{ marginTop: "0.75rem", border: "none" }}>
-          ✓ {after.issues.filter((i) => i.severity === "good").length} areas passed ATS checks
+      {passedCount > 0 && (
+        <p className="ats-issue ats-issue-good" style={{ marginTop: "var(--space-3)", border: "none" }}>
+          {passedCount} section{passedCount === 1 ? "" : "s"} passed ATS checks
         </p>
       )}
     </div>

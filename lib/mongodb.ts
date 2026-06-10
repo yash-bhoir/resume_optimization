@@ -1,6 +1,12 @@
 import mongoose from "mongoose";
 
-const MONGODB_URI = process.env.MONGODB_URI || "mongodb://localhost:27017/resume-optimizer";
+function getMongoUri(): string {
+  const uri = process.env.MONGODB_URI?.trim();
+  if (!uri && process.env.NODE_ENV === "production") {
+    throw new Error("MONGODB_URI must be set in production");
+  }
+  return uri || "mongodb://localhost:27017/resume-optimizer";
+}
 
 interface MongooseCache {
   conn: typeof mongoose | null;
@@ -22,7 +28,7 @@ export async function connectDB(): Promise<typeof mongoose> {
   if (cached.conn) return cached.conn;
 
   if (!cached.promise) {
-    cached.promise = mongoose.connect(MONGODB_URI, {
+    cached.promise = mongoose.connect(getMongoUri(), {
       bufferCommands: false,
     });
   }

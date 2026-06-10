@@ -9,8 +9,10 @@ import {
   validateCompleteness,
   buildCompletenessRetryPrompt,
 } from "./resume-completeness";
+import { normalizeContact } from "./contact-normalize";
 import {
-  validateBulletMetrics,
+  validateExperienceBulletMetrics,
+  validateDocumentExperienceMetrics,
   buildMetricRetryPrompt,
 } from "./metric-validator";
 import {
@@ -18,6 +20,16 @@ import {
   buildRepetitionRetryPrompt,
 } from "./resume-analysis";
 import { resumeToPlainText } from "./resume-text";
+import type { ResumeDocument } from "@/types/resume-document";
+import {
+  DOCUMENT_SYSTEM_PROMPT,
+  buildDocumentOptimizePrompt,
+} from "./resume-optimize-prompt";
+import {
+  documentToPlainText,
+  parseOptimizedDocumentJson,
+  validateDocument,
+} from "./resume-schema";
 
 const TIMEOUT_MS = 60000;
 const MAX_RETRIES = 2;
@@ -148,22 +160,83 @@ export async function optimizeResume(
     }
   }
 
-  const metrics = validateBulletMetrics(content, true);
-  if (!metrics.ok && metrics.missing.length > 0) {
+  for (let attempt = 0; attempt < 2; attempt++) {
+    const metrics = validateExperienceBulletMetrics(content, true);
+    if (metrics.ok || metrics.missing.length === 0) break;
     const retryPrompt = `${userPrompt}\n\n${buildMetricRetryPrompt(metrics.missing)}`;
     raw = await callWithRetry(systemPrompt, retryPrompt);
     content = normalizeLatexBody(extractDocumentContent(sanitizeLatexOutput(raw)) || sanitizeLatexOutput(raw));
   }
 
-  const plain = resumeToPlainText(content, true);
-  const repetitionWarnings = detectRepetition(plain);
-  if (repetitionWarnings.length > 0) {
+  for (let attempt = 0; attempt < 2; attempt++) {
+    const plain = resumeToPlainText(content, true);
+    const repetitionWarnings = detectRepetition(plain);
+    if (repetitionWarnings.length === 0) break;
     const retryPrompt = `${userPrompt}\n\n${buildRepetitionRetryPrompt(repetitionWarnings)}`;
     raw = await callWithRetry(systemPrompt, retryPrompt);
     content = normalizeLatexBody(extractDocumentContent(sanitizeLatexOutput(raw)) || sanitizeLatexOutput(raw));
   }
 
   return wrapLatexContent(content);
+}
+
+export async function optimizeResumeDocument(
+  doc: ResumeDocument,
+  jobDescription: string
+): Promise<ResumeDocument> {
+  const prompt = buildDocumentOptimizePrompt(doc, jobDescription);
+  let raw = await callWithRetry(DOCUMENT_SYSTEM_PROMPT, prompt);
+  let optimized = parseOptimizedDocumentJson(raw);
+
+  if (!optimized || !validateDocument(optimized)) {
+    const retryPrompt = `${prompt}\n\nYour previous response was not valid JSON. Return ONLY the complete optimized ResumeDocument JSON object.`;
+    raw = await callWithRetry(DOCUMENT_SYSTEM_PROMPT, retryPrompt);
+    optimized = parseOptimizedDocumentJson(raw);
+  }
+
+  if (!optimized || !validateDocument(optimized)) {
+    throw new Error("Failed to parse optimized resume JSON from AI");
+  }
+
+  optimized.contact = normalizeContact(optimized.contact);
+  optimized.rawPlainText = documentToPlainText(optimized);
+
+  const metrics = validateDocumentExperienceMetrics(optimized);
+  if (!metrics.ok && metrics.missing.length > 4) {
+    const retryPrompt = `${prompt}\n\n${buildMetricRetryPrompt(metrics.missing.slice(0, 6))}\n\nReturn corrected JSON only. Do not invent metrics.`;
+    raw = await callWithRetry(DOCUMENT_SYSTEM_PROMPT, retryPrompt);
+    const retryDoc = parseOptimizedDocumentJson(raw);
+    if (retryDoc && validateDocument(retryDoc)) {
+      optimized = retryDoc;
+      optimized.contact = normalizeContact(optimized.contact);
+      optimized.rawPlainText = documentToPlainText(optimized);
+    }
+  }
+
+  const repetitionWarnings = detectRepetition(optimized.rawPlainText);
+  if (repetitionWarnings.length > 2) {
+    const retryPrompt = `${prompt}\n\n${buildRepetitionRetryPrompt(repetitionWarnings.slice(0, 4))}\n\nReturn corrected JSON only.`;
+    raw = await callWithRetry(DOCUMENT_SYSTEM_PROMPT, retryPrompt);
+    const retryDoc = parseOptimizedDocumentJson(raw);
+    if (retryDoc && validateDocument(retryDoc)) {
+      optimized = retryDoc;
+      optimized.contact = normalizeContact(optimized.contact);
+      optimized.rawPlainText = documentToPlainText(optimized);
+    }
+  }
+
+  if (doc.experience.length > 0 && optimized.experience.length < doc.experience.length) {
+    optimized.experience = doc.experience.map((job, i) => ({
+      ...job,
+      ...optimized.experience[i],
+      bullets: optimized.experience[i]?.bullets?.length
+        ? optimized.experience[i].bullets
+        : job.bullets,
+    }));
+    optimized.rawPlainText = documentToPlainText(optimized);
+  }
+
+  return optimized;
 }
 
 export function getActiveModel(): string {

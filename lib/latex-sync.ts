@@ -1,5 +1,6 @@
 function htmlToLatexInline(html: string): string {
   return html
+    .replace(/<span class="pipe-sep">\s*\|\s*<\/span>/gi, " $|$ ")
     .replace(/<strong>(.*?)<\/strong>/gi, "\\textbf{$1}")
     .replace(/<b>(.*?)<\/b>/gi, "\\textbf{$1}")
     .replace(/<em>(.*?)<\/em>/gi, "\\textit{$1}")
@@ -15,6 +16,18 @@ function htmlToLatexInline(html: string): string {
     .trim();
 }
 
+function buildHeaderLatex(header: Element): string {
+  const name = htmlToLatexInline(
+    header.querySelector('[data-field="name"]')?.innerHTML || ""
+  );
+  const contact = htmlToLatexInline(
+    header.querySelector('[data-field="contact"]')?.innerHTML || ""
+  );
+  if (!name && !contact) return htmlToLatexInline(header.innerHTML);
+  const lines = [name, contact].filter(Boolean).join(" \\\\ ");
+  return `\\begin{center}\n${lines}\n\\end{center}`;
+}
+
 export function rebuildLatexFromEditableDom(
   container: HTMLElement,
   originalLatex: string
@@ -28,12 +41,10 @@ export function rebuildLatexFromEditableDom(
 
   const header = container.querySelector(".resume-header");
   if (header) {
-    const headerLatex = htmlToLatexInline(header.innerHTML);
+    const headerLatex = buildHeaderLatex(header);
     const headerPattern = /(\\begin\{center\}[\s\S]*?\\end\{center\}|\\begin\{tabular\*?\}[\s\S]*?\\end\{tabular\*?\})/i;
     if (headerPattern.test(body)) {
-      body = body.replace(headerPattern, headerLatex.includes("\\begin{center}")
-        ? headerLatex
-        : `\\begin{center}\n${headerLatex}\n\\end{center}`);
+      body = body.replace(headerPattern, headerLatex);
     }
   }
 

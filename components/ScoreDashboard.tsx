@@ -26,70 +26,78 @@ export default function ScoreDashboard({
 }: ScoreDashboardProps) {
   const keywordGain = matchScoreAfter - matchScoreBefore;
   const atsGain = atsScoreAfter - atsScoreBefore;
+  const netGain = optimizationGain || atsGain;
 
   return (
     <div className="score-dashboard">
       <div className="score-row">
         <div className="score-card">
-          <span className="score-label">Keyword Match</span>
+          <span className="score-label">Keyword match</span>
           <div className="score-values">
             <span className="score-before">{matchScoreBefore}%</span>
-            <span className="score-arrow">→</span>
+            <span className="score-arrow" aria-hidden>→</span>
             <span className="score-after">{matchScoreAfter}%</span>
           </div>
           {keywordGain !== 0 && (
             <span className={`score-gain ${keywordGain < 0 ? "score-loss" : ""}`}>
               {keywordGain > 0 ? "+" : ""}
-              {keywordGain}% keywords
+              {keywordGain}% job keyword alignment
             </span>
           )}
+          <span className="score-hint">Based on skills &amp; requirements from the job description</span>
+          <p className="score-disclaimer">
+            Estimated scores — not from a real employer ATS. Use keyword coverage below to verify
+            tailoring.
+          </p>
         </div>
 
         <div className="score-card highlight">
-          <span className="score-label">ATS Score (estimated)</span>
+          <span className="score-label">ATS score (estimate)</span>
           <div className="score-values">
             <span className="score-before">{atsScoreBefore}%</span>
-            <span className="score-arrow">→</span>
+            <span className="score-arrow" aria-hidden>→</span>
             <span className="score-after">{atsScoreAfter}%</span>
           </div>
           {atsGain !== 0 && (
             <span className={`score-gain ${atsGain < 0 ? "score-loss" : ""}`}>
               {atsGain > 0 ? "+" : ""}
-              {atsGain}% ATS compatibility
+              {atsGain}% parsing compatibility
             </span>
           )}
         </div>
 
         <div className="score-card">
-          <span className="score-label">Optimization</span>
+          <span className="score-label">Net improvement</span>
           <div className="score-values">
-            <span className={`score-after large ${(optimizationGain || atsGain) < 0 ? "negative" : ""}`}>
-              {(optimizationGain || atsGain) > 0 ? "+" : ""}
-              {optimizationGain || atsGain}%
+            <span className={`score-after large ${netGain < 0 ? "negative" : ""}`}>
+              {netGain > 0 ? "+" : ""}
+              {netGain}%
             </span>
           </div>
           {optimizationPercent > 0 && (
-            <span className="score-gain">{optimizationPercent}% improvement</span>
+            <span className="score-gain">{optimizationPercent}% relative gain</span>
           )}
         </div>
 
         <div className="score-card neutral">
-          <span className="score-label">Pages</span>
+          <span className="score-label">Page count</span>
           <div className="score-values">
             <span className="score-after large">{pageCount}</span>
           </div>
-          <span className="score-gain">2 pages OK</span>
+          <span className="score-gain">
+            {pageCount <= 2 ? "Within typical length" : "Consider trimming"}
+          </span>
         </div>
       </div>
 
       {atsBreakdownAfter && (
         <details className="ats-breakdown">
-          <summary>ATS breakdown (after optimization)</summary>
+          <summary>Score breakdown after optimization</summary>
           <ul>
             <li>JD keywords: {atsBreakdownAfter.keywordScore}%</li>
             <li>Required skills: {atsBreakdownAfter.skillsScore}%</li>
             <li>Measurable bullets: {atsBreakdownAfter.measurableScore ?? "—"}%</li>
-            <li>Word choice / content: {atsBreakdownAfter.contentScore ?? "—"}%</li>
+            <li>Word choice: {atsBreakdownAfter.contentScore ?? "—"}%</li>
             <li>Structure: {atsBreakdownAfter.structureScore}%</li>
             <li>Parse quality: {atsBreakdownAfter.parseScore}%</li>
           </ul>

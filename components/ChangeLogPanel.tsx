@@ -21,7 +21,7 @@ export default function ChangeLogPanel({ items, summaries }: ChangeLogPanelProps
 
   return (
     <div className="change-log-panel">
-      <h3>What changed</h3>
+      <h3>What we changed</h3>
       <ul className="change-log-detailed">
         {items.length > 0
           ? items.map((item, i) => (

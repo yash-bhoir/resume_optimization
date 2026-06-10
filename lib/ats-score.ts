@@ -56,7 +56,7 @@ function calculateRequiredSkillsMatch(jobDescription: string, resumeText: string
 }
 
 function calculateStructureScore(resumeText: string): number {
-  const plain = resumeToPlainText(resumeText, isLatexSource(resumeText));
+  const plain = resumeToPlainText(resumeText, isLatexSource(resumeText)).toLowerCase();
   let found = 0;
   for (const section of STANDARD_SECTIONS) {
     if (plain.includes(section)) found++;

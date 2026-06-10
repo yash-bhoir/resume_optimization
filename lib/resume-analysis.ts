@@ -41,7 +41,7 @@ export function detectRepetition(plain: string): ResumeAnalysis["repetitionWarni
 
   const warnings: ResumeAnalysis["repetitionWarnings"] = [];
   for (const [word, count] of counts) {
-    if (count >= 3 && REPETITION_ALTERNATIVES[word]) {
+    if (count > 2 && REPETITION_ALTERNATIVES[word]) {
       warnings.push({
         word,
         count,
@@ -62,8 +62,8 @@ export function buildRepetitionRetryPrompt(
     )
     .join("\n");
 
-  return `CRITICAL: Over-repeated action verbs hurt ATS content score (Enhancv flags these).
-Rewrite bullets to use varied verbs — never repeat the same action verb more than twice in the full resume.
+  return `CRITICAL: Over-repeated action verbs hurt ATS content score (Enhancv flags 3+ uses).
+Rewrite bullets to use varied verbs — NEVER use the same action verb more than TWICE (2 times) in the full resume.
 
 Repeated words to fix:
 ${lines}
@@ -327,10 +327,21 @@ export function analyzeResume(
   checkEducation(plain, issues, sectionIssues);
   checkTailoring(text, jobDescription, issues);
 
-  const bullets = extractBullets(text, resolvedLatex);
-  const withMetrics = bullets.filter((b) => bulletHasMetric(b)).length;
+  const expBullets = extractExperienceBullets(text, resolvedLatex).filter((b) => {
+    const p = b.includes("\\") ? stripLatexInline(b) : b;
+    return p.length > 20;
+  });
+  const expWithMetrics = expBullets.filter((b) => bulletHasMetric(b)).length;
+  const experienceMeasurablePercent =
+    expBullets.length > 0 ? Math.round((expWithMetrics / expBullets.length) * 100) : 100;
+  const bulletsMissingMetrics = expBullets
+    .filter((b) => !bulletHasMetric(b))
+    .map((b) => (b.includes("\\") ? stripLatexInline(b) : b).slice(0, 200));
+
+  const allBullets = extractBullets(text, resolvedLatex);
+  const withMetrics = allBullets.filter((b) => bulletHasMetric(b)).length;
   const measurablePercent =
-    bullets.length > 0 ? Math.round((withMetrics / bullets.length) * 100) : 100;
+    allBullets.length > 0 ? Math.round((withMetrics / allBullets.length) * 100) : 100;
 
   const repetitionWarnings = detectRepetition(plain);
 
@@ -366,17 +377,19 @@ export function analyzeResume(
     sectionIssues,
     issues,
     measurablePercent,
+    experienceMeasurablePercent,
+    bulletsMissingMetrics,
     repetitionWarnings,
     categoryScores: {
       content: 0,
       sections: 0,
       atsEssentials: 0,
       tailoring: jobDescription.trim().length >= 20 ? keywordMatch : null,
-      measurable: measurablePercent,
+      measurable: experienceMeasurablePercent,
       repetition: Math.max(
         0,
         100 -
-          repetitionWarnings.reduce((s, w) => s + Math.max(0, w.count - 2) * 8, 0)
+          repetitionWarnings.reduce((s, w) => s + Math.max(0, w.count - 2) * 12, 0)
       ),
     },
   };

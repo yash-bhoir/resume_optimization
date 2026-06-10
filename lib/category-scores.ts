@@ -14,10 +14,12 @@ export function computeCategoryScores(
 
   const contentIssueCount =
     (analysis.sectionIssues.Content || 0) + (analysis.sectionIssues.Summary || 0);
-  const measurableGap = Math.max(0, 100 - analysis.measurablePercent);
+  const expMeasurable =
+    analysis.experienceMeasurablePercent ?? analysis.measurablePercent;
+  const measurableGap = Math.max(0, 100 - expMeasurable);
   const content = Math.max(
     0,
-    Math.min(100, Math.round(100 - contentIssueCount * 8 - measurableGap * 0.12))
+    Math.min(100, Math.round(100 - contentIssueCount * 8 - measurableGap * 0.35))
   );
 
   const contactIssues = analysis.sectionIssues.Contact || 0;
@@ -37,7 +39,7 @@ export function computeCategoryScores(
     sections,
     atsEssentials,
     tailoring: hasJobDescription ? keywordMatch : null,
-    measurable: analysis.measurablePercent,
+    measurable: expMeasurable,
     repetition,
   };
 }
@@ -48,12 +50,12 @@ export function computeReportScore(categoryScores: CategoryScores): number {
   return Math.min(
     100,
     Math.round(
-      categoryScores.content * 0.22 +
-        tailoring * 0.28 +
-        categoryScores.measurable * 0.22 +
-        categoryScores.repetition * 0.13 +
-        categoryScores.sections * 0.08 +
-        categoryScores.atsEssentials * 0.07
+      categoryScores.content * 0.2 +
+        tailoring * 0.25 +
+        categoryScores.measurable * 0.28 +
+        categoryScores.repetition * 0.15 +
+        categoryScores.sections * 0.07 +
+        categoryScores.atsEssentials * 0.05
     )
   );
 }

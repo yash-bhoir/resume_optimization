@@ -1,6 +1,8 @@
 "use client";
 
 import Link from "next/link";
+import { useAuth, SignInButton, UserButton } from "@clerk/nextjs";
+import UsageCounter from "@/components/UsageCounter";
 
 interface AppHeaderProps {
   showBack?: boolean;
@@ -8,43 +10,80 @@ interface AppHeaderProps {
   backLabel?: string;
 }
 
+function BrandIcon() {
+  return (
+    <svg width="32" height="32" viewBox="0 0 32 32" fill="none" aria-hidden>
+      <rect width="32" height="32" rx="8" fill="var(--color-accent)" />
+      <path
+        d="M9 21V11h3.5c2.1 0 3.5 1.1 3.5 2.8 0 1.2-.7 2.1-1.8 2.5L17 21h-3.6l-2-2.8h1.9V21H9zm3.2-5h.9c.9 0 1.4-.4 1.4-1.2s-.5-1.2-1.4-1.2h-.9v2.4zM18 21V11h3.8v2.3H20.2v1.5h1.4v2.3h-1.4V21H18z"
+        fill="white"
+      />
+    </svg>
+  );
+}
+
 export default function AppHeader({
   showBack = false,
   backHref = "/",
   backLabel = "New optimization",
 }: AppHeaderProps) {
+  const { isSignedIn, isLoaded } = useAuth();
+
   return (
     <header className="app-header">
       <div className="app-header-inner">
-        <Link href="/" className="brand">
-          <span className="brand-icon" aria-hidden>
-            <svg width="28" height="28" viewBox="0 0 28 28" fill="none">
-              <rect width="28" height="28" rx="8" fill="url(#brandGrad)" />
-              <path
-                d="M8 18V10h3.2c2 0 3.3 1 3.3 2.6 0 1.1-.6 2-1.6 2.4L15.5 18H12l-1.8-2.5H11V18H8zm3-4.5h.8c.9 0 1.4-.4 1.4-1.1s-.5-1.1-1.4-1.1H11v2.2zM16.5 18V10H20v2.2h-2.2V13H19.5v2.2h-1.7V18h-1.3z"
-                fill="white"
-              />
-              <defs>
-                <linearGradient id="brandGrad" x1="0" y1="0" x2="28" y2="28">
-                  <stop stopColor="#4F46E5" />
-                  <stop offset="1" stopColor="#0EA5E9" />
-                </linearGradient>
-              </defs>
-            </svg>
+        <Link href="/" className="brand" aria-label="Resume Optimizer home">
+          <span className="brand-icon">
+            <BrandIcon />
           </span>
           <span className="brand-text">
             <span className="brand-name">Resume Optimizer</span>
-            <span className="brand-tagline">ATS-ready · JD-tailored</span>
+            <span className="brand-tagline">Tailor resumes to job postings</span>
           </span>
         </Link>
 
-        <nav className="header-nav">
-          {showBack ? (
+        <nav className="header-nav" aria-label="Main">
+          <Link href="/how-it-works" className="header-link header-link--aux">
+            How it works
+          </Link>
+          <Link href="/pricing" className="header-link header-link--aux">
+            Pricing
+          </Link>
+          <Link href="/faq" className="header-link header-link--aux">
+            FAQ
+          </Link>
+          <Link href="/blog" className="header-link header-link--aux">
+            Blog
+          </Link>
+          {isLoaded && isSignedIn && (
+            <Link href="/history" className="header-link">
+              History
+            </Link>
+          )}
+
+          {showBack && (
             <Link href={backHref} className="header-link">
               ← {backLabel}
             </Link>
-          ) : (
-            <span className="header-pill">Free · No login</span>
+          )}
+
+          {!showBack && (
+            <span className="header-pill header-pill--desktop">No account needed to try</span>
+          )}
+
+          {isLoaded && !isSignedIn && (
+            <SignInButton mode="modal">
+              <button type="button" className="btn btn-secondary btn-sm">
+                Sign in
+              </button>
+            </SignInButton>
+          )}
+
+          {isLoaded && isSignedIn && (
+            <>
+              <UsageCounter compact />
+              <UserButton />
+            </>
           )}
         </nav>
       </div>

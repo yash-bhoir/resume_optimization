@@ -1,3 +1,5 @@
+import { normalizeLatexContactUrls } from "./contact-normalize";
+
 export const LATEX_TEMPLATE = `%-------------------------
 % Resume in Latex
 % Author : Jake Gutierrez
@@ -175,9 +177,9 @@ ${JAKE_TEMPLATE_EXAMPLE}
 STEP 1 — Read the complete resume: count every job, project, education entry, and skill before writing.
 STEP 2 — Optimize for selection (not shortening):
 1. Extract every keyword, skill, and technology from the job description. Inject them naturally using exact JD phrasing.
-2. Rewrite EVERY bullet as: [Strong action verb] → [What you did] → [Measurable result]. Each bullet MUST include at least one number, %, or scale (e.g. 30%, 12+ sprints, 50 users, 10 hrs saved).
+2. Rewrite EVERY experience bullet as: [Strong action verb] → [What you did] → [Measurable result]. Each experience bullet MUST include at least one number (100% required — e.g. 30%, 4 developers, 12+ sprints, 50 users).
 3. NEVER use first person (I, my, me). NEVER use weak phrases: "responsible for", "worked on", "helped with".
-4. Vary verbs — never repeat the same action verb more than twice in the full resume. Especially avoid overusing: designed (use architected, built, engineered, planned), managed (use led, oversaw, directed, supervised), automated (use streamlined, systematized).
+4. Vary verbs — NEVER use the same action verb more than TWICE (2 times). Especially avoid overusing: designed (use architected, built, engineered, planned), managed (use led, oversaw, directed, supervised), automated (use streamlined, systematized).
 5. Preserve ALL content from the original resume — reword and strengthen, NEVER remove jobs, projects, bullets, or skills.
 6. Two pages is fine. Do NOT compress or delete content to fit one page.
 7. Match seniority language of the JD role title.
@@ -229,7 +231,7 @@ Return ONLY a JSON array of 5 strings.`;
 }
 
 export function wrapLatexContent(content: string): string {
-  const trimmed = content.trim();
+  const trimmed = normalizeLatexContactUrls(content.trim());
   if (trimmed.includes("\\documentclass")) {
     return trimmed;
   }

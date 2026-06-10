@@ -2,6 +2,7 @@ import mongoose, { Schema, model, models } from "mongoose";
 
 export interface ISession {
   sessionId: string;
+  clerkId: string;
   rawText: string;
   jobDescription: string;
   latexSource: string;
@@ -16,6 +17,7 @@ export interface ISession {
 const SessionSchema = new Schema<ISession>(
   {
     sessionId: { type: String, required: true, unique: true, index: true },
+    clerkId: { type: String, required: true, index: true },
     rawText: { type: String, default: "" },
     jobDescription: { type: String, default: "" },
     latexSource: { type: String, default: "" },

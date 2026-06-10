@@ -48,15 +48,15 @@ export default function PreDownloadChecklist({
         aria-expanded={expanded}
       >
         <div>
-          <strong>Pre-download checklist</strong>
+          <strong>Before you download</strong>
           <span className="checklist-sub">
-            {passed}/{total} checks passed
+            {passed} of {total} checks passed
             {!allPass && criticalFails.length > 0
-              ? ` · ${criticalFails.length} critical`
+              ? ` · ${criticalFails.length} need attention`
               : ""}
           </span>
         </div>
-        <span className="checklist-chevron">{expanded ? "▾" : "▸"}</span>
+        <span className="checklist-chevron" aria-hidden>{expanded ? "▾" : "▸"}</span>
       </button>
 
       {expanded && (
@@ -80,10 +80,10 @@ export default function PreDownloadChecklist({
           {(beforeFirstPerson && !afterFirstPerson) ||
           analysisBefore.repetitionWarnings.length > analysisAfter.repetitionWarnings.length ? (
             <div className="checklist-fixed">
-              <span className="checklist-fixed-title">Fixed by optimization</span>
+              <span className="checklist-fixed-title">Fixed during optimization</span>
               <ul>
                 {beforeFirstPerson && !afterFirstPerson && (
-                  <li>Removed first-person summary</li>
+                  <li>Removed first-person language from summary</li>
                 )}
                 {analysisBefore.repetitionWarnings.map((w) => {
                   const afterW = analysisAfter.repetitionWarnings.find(
@@ -104,12 +104,12 @@ export default function PreDownloadChecklist({
 
           {!allPass && (
             <p className="checklist-note">
-              Fix flagged items or use Edit mode before downloading and applying.
+              Address flagged items in Edit mode, then download when you&apos;re ready to apply.
             </p>
           )}
           {allPass && (
             <p className="checklist-note pass-note">
-              All checks passed — ready to download and apply.
+              All checks passed — you can download and apply.
             </p>
           )}
         </div>

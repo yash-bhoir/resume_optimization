@@ -1,31 +1,19 @@
-import puppeteer from "puppeteer";
 import { buildExportHtml, htmlToPlainText, latexToHtml } from "./latex-to-html";
-import { getPuppeteerLaunchOptions } from "./puppeteer-browser";
+import { withBrowserPage } from "./puppeteer-pool";
 
 export async function exportToPdf(latexSource: string): Promise<Buffer> {
   const html = buildExportHtml(latexSource);
-  const launchOptions = getPuppeteerLaunchOptions();
 
-  if (!launchOptions.executablePath) {
-    throw new Error(
-      "PDF export needs Chrome or Edge. Install a browser, or run: npx puppeteer browsers install chrome"
-    );
-  }
-
-  const browser = await puppeteer.launch(launchOptions);
-
-  try {
-    const page = await browser.newPage();
-    await page.setContent(html, { waitUntil: "load" });
-    const pdf = await page.pdf({
+  const pdf = await withBrowserPage(async (page) => {
+    await page.setContent(html, { waitUntil: "load", timeout: 30_000 });
+    return page.pdf({
       format: "letter",
       printBackground: true,
       margin: { top: "0.5in", right: "0.5in", bottom: "0.5in", left: "0.5in" },
     });
-    return Buffer.from(pdf);
-  } finally {
-    await browser.close();
-  }
+  });
+
+  return Buffer.from(pdf);
 }
 
 export async function exportToDocx(latexSource: string): Promise<Buffer> {

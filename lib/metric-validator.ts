@@ -1,7 +1,7 @@
 import { stripLatexInline, resumeToPlainText } from "./resume-text";
 
 const METRIC_PATTERN =
-  /\b\d+[\s–-]\d+\s*%|\b\d+\s*%|\b\d+\+|%\s*\d+|\b\d{1,4}\s*(?:users|clients|customers|teams|sprints|projects|hrs|hours|devices|transactions|videos|developers|products|monthly|daily)\b|\b(?:reduced|increased|improved|cut|grew|saved|delivered|shipped|optimized|achieving|achieved|processing|generating|mentored|conducted|resulting|over|across)\b[^.]{0,80}\d/i;
+  /\b\d+[\s–-]\d+\s*%|\b\d+\s*%|\b\d+\+|%\s*\d+|\b\d{1,4}\s*(?:users|clients|customers|teams|squads|sprints|projects|releases|hrs|hours|devices|transactions|videos|developers|engineers|products|apis|endpoints|components|departments|members|monthly|daily)\b|\b(?:team|squad)s?\s+of\s+\d+|\b(?:mentored|led|managed|supervised|onboarded|coordinated)\s+\d+|\b(?:reduced|increased|improved|cut|grew|saved|delivered|shipped|optimized|achieving|achieved|processing|generating|mentored|conducted|resulting|over|across)\b[^.]{0,80}\d/i;
 
 const FIRST_PERSON = /\b(?:i am|i'm|my |me |our team and i)\b/i;
 
@@ -127,13 +127,54 @@ export function extractExperienceBullets(text: string, isLatex: boolean): string
 
 export function bulletHasMetric(bullet: string): boolean {
   const plain = bullet.includes("\\") ? stripLatexInline(bullet) : bullet.toLowerCase();
-  return METRIC_PATTERN.test(plain);
+  if (METRIC_PATTERN.test(plain)) return true;
+  const numbers = plain.match(/\b\d+\b/g) || [];
+  return numbers.some((n) => {
+    const num = parseInt(n, 10);
+    return !(n.length === 4 && num >= 1990 && num <= 2099);
+  });
 }
 
-export function validateBulletMetrics(
+export type BulletMetricResult = {
+  ok: boolean;
+  total: number;
+  withMetrics: number;
+  missing: string[];
+};
+
+function toDisplayBullet(b: string): string {
+  return (b.includes("\\") ? stripLatexInline(b) : b).slice(0, 200);
+}
+
+export function validateExperienceBulletMetrics(
   text: string,
   isLatex: boolean
-): { ok: boolean; total: number; withMetrics: number; missing: string[] } {
+): BulletMetricResult {
+  const bullets = extractExperienceBullets(text, isLatex).filter((b) => {
+    const p = b.includes("\\") ? stripLatexInline(b) : b;
+    return p.length > 20;
+  });
+
+  if (bullets.length === 0) {
+    return { ok: true, total: 0, withMetrics: 0, missing: [] };
+  }
+
+  const missing: string[] = [];
+  let withMetrics = 0;
+  for (const b of bullets) {
+    if (bulletHasMetric(b)) withMetrics++;
+    else missing.push(toDisplayBullet(b));
+  }
+
+  return {
+    ok: missing.length === 0,
+    total: bullets.length,
+    withMetrics,
+    missing,
+  };
+}
+
+export function validateBulletMetrics(text: string, isLatex: boolean): BulletMetricResult {
   const bullets = extractBullets(text, isLatex);
   if (bullets.length === 0) {
     return { ok: true, total: 0, withMetrics: 0, missing: [] };
@@ -143,15 +184,38 @@ export function validateBulletMetrics(
   let withMetrics = 0;
   for (const b of bullets) {
     if (bulletHasMetric(b)) withMetrics++;
-    else missing.push((b.includes("\\") ? stripLatexInline(b) : b).slice(0, 120));
+    else missing.push(toDisplayBullet(b));
   }
 
-  const ratio = withMetrics / bullets.length;
   return {
-    ok: ratio >= 0.75,
+    ok: missing.length === 0,
     total: bullets.length,
     withMetrics,
-    missing: missing.slice(0, 8),
+    missing: missing.slice(0, 12),
+  };
+}
+
+export function validateDocumentExperienceMetrics(
+  doc: import("@/types/resume-document").ResumeDocument
+): BulletMetricResult {
+  const missing: string[] = [];
+  let total = 0;
+  let withMetrics = 0;
+
+  for (const job of doc.experience) {
+    for (const bullet of job.bullets) {
+      if (bullet.trim().length < 15) continue;
+      total++;
+      if (bulletHasMetric(bullet)) withMetrics++;
+      else missing.push(bullet.slice(0, 200));
+    }
+  }
+
+  return {
+    ok: total === 0 || missing.length === 0,
+    total,
+    withMetrics,
+    missing,
   };
 }
 
@@ -163,12 +227,13 @@ export function hasFirstPersonSummary(text: string, isLatex: boolean): boolean {
 }
 
 export function buildMetricRetryPrompt(missing: string[]): string {
-  return `CRITICAL: ${missing.length} bullets lack measurable results (numbers, %, scale).
-Every Experience and Project bullet MUST include at least one metric (e.g. 30%, 12+ sprints, 50 users, 10 hrs saved).
+  return `CRITICAL (Enhancv-style): ${missing.length} EXPERIENCE bullet(s) lack measurable results.
+EVERY experience bullet MUST include at least one number: %, team size, user count, API count, sprint count, or time saved.
+Examples: "mentoring 4 junior developers", "across 3 squads", "50+ users", "25% reduction", "12+ releases/year".
 
-Bullets missing metrics:
+Bullets missing metrics — rewrite ALL of these:
 ${missing.map((b, i) => `${i + 1}. ${b}`).join("\n")}
 
-Rewrite ONLY these bullets with strong action verbs and concrete numbers. Keep all other content unchanged.
-Return the FULL corrected LaTeX body.`;
+Rewrite ONLY the bullets listed above. Keep all jobs, titles, dates, and other bullets unchanged.
+Return the FULL corrected output.`;
 }

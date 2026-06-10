@@ -1,4 +1,8 @@
-export type DetectedFormat = "pdf" | "docx" | "txt" | "image" | "unknown";
+export type DetectedFormat = "pdf" | "docx" | "txt" | "tex" | "image" | "unknown";
+
+export type OptimizationMode = "preserve" | "template";
+
+export type { ResumeDocument } from "@/types/resume-document";
 
 export interface ParseResumeResponse {
   rawText: string;
@@ -45,6 +49,8 @@ export interface ResumeAnalysis {
   sectionIssues: Record<string, number>;
   issues: AtsIssue[];
   measurablePercent: number;
+  experienceMeasurablePercent: number;
+  bulletsMissingMetrics: string[];
   repetitionWarnings: { word: string; count: number; alternatives: string[] }[];
   categoryScores: CategoryScores;
 }
@@ -106,7 +112,6 @@ export interface SessionData {
 export type OptimizeStep =
   | "idle"
   | "parsing"
-  | "review"
   | "optimizing"
   | "rendering"
   | "page-fit"
