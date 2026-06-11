@@ -87,36 +87,32 @@ export function priorityKeywordCoverage(
   return { matched, total: keywords.length, percent };
 }
 
-/** User-facing score after optimization — reflects priority keyword coverage users expect (90%+). */
+/** User-facing keyword score — primarily JD priority-term coverage for this job posting. */
 export function calibrateOptimizedMatchScore(
   before: number,
   rawAfter: number,
   jobDescription: string,
   resumeText: string
 ): number {
-  const { percent: priorityPct } = priorityKeywordCoverage(jobDescription, resumeText);
-  const blended = Math.round(rawAfter * 0.3 + priorityPct * 0.7);
-  let display = Math.max(before + 8, rawAfter, blended);
+  const { percent: priorityPct, total } = priorityKeywordCoverage(jobDescription, resumeText);
+  if (total === 0) return Math.min(100, Math.max(before, rawAfter));
 
-  if (priorityPct >= 85) display = Math.max(display, 92);
-  else if (priorityPct >= 75) display = Math.max(display, 88);
-  else if (priorityPct >= 65) display = Math.max(display, 82);
-
-  return Math.min(98, display);
+  const jdBased = Math.round(priorityPct * 0.85 + rawAfter * 0.15);
+  return Math.min(100, Math.max(before, jdBased));
 }
 
+/** ATS estimate after optimization — weighted toward JD keyword coverage for this posting. */
 export function calibrateOptimizedAtsScore(
   before: number,
   rawAfter: number,
-  calibratedMatch: number
+  jobDescription: string,
+  resumeText: string
 ): number {
-  const target = Math.round(calibratedMatch * 0.94 + rawAfter * 0.06);
-  let display = Math.max(before + 6, rawAfter, target);
+  const { percent: priorityPct, total } = priorityKeywordCoverage(jobDescription, resumeText);
+  if (total === 0) return Math.min(100, Math.max(before, rawAfter));
 
-  if (calibratedMatch >= 92) display = Math.max(display, 90);
-  else if (calibratedMatch >= 85) display = Math.max(display, 85);
-
-  return Math.min(98, display);
+  const jdBased = Math.round(priorityPct * 0.65 + rawAfter * 0.35);
+  return Math.min(100, Math.max(before, jdBased));
 }
 
 const COMPOUND_PATTERNS = [

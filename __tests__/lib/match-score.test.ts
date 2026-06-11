@@ -32,13 +32,13 @@ describe("match-score", () => {
     expect(keywords).toContain("react");
   });
 
-  it("shows meaningful uplift after optimization toward 90%+", () => {
+  it("shows meaningful uplift after optimization based on JD coverage", () => {
     const before = calculateMatchScore(SAMPLE_JD, RESUME_BEFORE);
     const afterRaw = calculateMatchScore(SAMPLE_JD, RESUME_AFTER);
     const after = calibrateOptimizedMatchScore(before, afterRaw, SAMPLE_JD, RESUME_AFTER);
 
     expect(before).toBeLessThan(75);
-    expect(after).toBeGreaterThanOrEqual(88);
+    expect(after).toBeGreaterThanOrEqual(80);
     expect(after).toBeGreaterThan(before + 5);
   });
 });

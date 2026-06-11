@@ -4,6 +4,7 @@ import {
   calculateMatchScore,
   calibrateOptimizedMatchScore,
   calibrateOptimizedAtsScore,
+  priorityKeywordCoverage,
 } from "@/lib/match-score";
 import { calculateAtsScore, calculateOptimizationGain } from "@/lib/ats-score";
 import { generateChangeLog, generateFallbackChangeLog } from "@/lib/change-log";
@@ -194,7 +195,12 @@ export async function POST(request: NextRequest) {
       const atsAfterRaw = calculateAtsScore(trimmedJd, latexSource, true);
       const atsAfter = {
         ...atsAfterRaw,
-        total: calibrateOptimizedAtsScore(atsBefore.total, atsAfterRaw.total, scoreAfter),
+        total: calibrateOptimizedAtsScore(
+          atsBefore.total,
+          atsAfterRaw.total,
+          trimmedJd,
+          latexSource
+        ),
       };
       let analysisAfter = withCategoryScores(
         analyzeResume(afterPlain, false, trimmedJd),
@@ -262,6 +268,8 @@ export async function POST(request: NextRequest) {
         }
       }
 
+      const jdKeywordCoverage = priorityKeywordCoverage(trimmedJd, afterPlain);
+
       logger.info({ userId: userId ?? "guest", scoreBefore, scoreAfter, format }, "Optimization complete");
 
       return jsonOk({
@@ -277,6 +285,7 @@ export async function POST(request: NextRequest) {
         keywordGain,
         atsBreakdownBefore: atsBefore.breakdown,
         atsBreakdownAfter: atsAfter.breakdown,
+        jdKeywordCoverage,
         changeLog,
         changeItems,
         pageFit: fit.pageFit,

@@ -1,5 +1,5 @@
 import { NextRequest } from "next/server";
-import { calculateMatchScore } from "@/lib/match-score";
+import { calculateMatchScore, priorityKeywordCoverage } from "@/lib/match-score";
 import { calculateAtsScore } from "@/lib/ats-score";
 import { analyzeResume } from "@/lib/resume-analysis";
 import { withCategoryScores } from "@/lib/category-scores";
@@ -58,6 +58,7 @@ export async function POST(request: NextRequest) {
 
       const isLatex = isLatexSource(trimmedResume);
 
+      const jdCoverage = priorityKeywordCoverage(trimmedJd, trimmedResume);
       const matchScoreBefore = calculateMatchScore(trimmedJd, trimmedResume);
       const atsBefore = calculateAtsScore(trimmedJd, trimmedResume, isLatex);
       const analysisBefore = withCategoryScores(
@@ -81,6 +82,7 @@ export async function POST(request: NextRequest) {
         atsScoreBefore: atsBefore.total,
         atsBreakdownBefore: atsBefore.breakdown,
         analysisBefore,
+        jdKeywordCoverage: jdCoverage,
       });
     } catch (err) {
       logger.error({ err }, "Score preview failed");

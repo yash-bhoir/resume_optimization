@@ -19,6 +19,9 @@ export interface AtsBreakdown {
   parseScore: number;
   measurableScore: number;
   contentScore: number;
+  jdCoveragePercent?: number;
+  jdKeywordsMatched?: number;
+  jdKeywordsTotal?: number;
 }
 
 export interface AtsIssue {

@@ -1,4 +1,7 @@
-import { calculateMatchScore } from "./match-score";
+import {
+  calculateMatchScore,
+  priorityKeywordCoverage,
+} from "./match-score";
 import { validateBulletMetrics } from "./metric-validator";
 import { resumeToPlainText, isLatexSource } from "./resume-text";
 
@@ -9,6 +12,10 @@ export interface AtsBreakdown {
   parseScore: number;
   measurableScore: number;
   contentScore: number;
+  /** Share of priority JD terms found in the resume (0–100). */
+  jdCoveragePercent?: number;
+  jdKeywordsMatched?: number;
+  jdKeywordsTotal?: number;
 }
 
 export interface AtsScoreResult {
@@ -16,44 +23,7 @@ export interface AtsScoreResult {
   breakdown: AtsBreakdown;
 }
 
-const REQUIRED_SKILL_PATTERNS = [
-  /\b(?:required|must have|must-have|essential)\b[^.]{0,200}/gi,
-  /\b(?:proficien\w+|experien\w+)\s+(?:in|with)\s+([^.]{5,120})/gi,
-];
-
 const STANDARD_SECTIONS = ["summary", "education", "experience", "projects", "skills"];
-
-function extractRequiredSkills(jobDescription: string): string[] {
-  const skills = new Set<string>();
-  const techPattern =
-    /\b(?:node\.?js|react\.?js|express\.?js|mongodb|typescript|javascript|python|java|aws|docker|kubernetes|graphql|postgresql|sql|nosql|mern|rest\s*api|agile|scrum|ci\/cd|next\.?js|vue\.?js|angular|redis|git|linux)\b/gi;
-
-  for (const match of jobDescription.match(techPattern) || []) {
-    skills.add(match.toLowerCase().replace(/\s+/g, " ").trim());
-  }
-
-  for (const pattern of REQUIRED_SKILL_PATTERNS) {
-    for (const block of jobDescription.match(pattern) || []) {
-      for (const m of block.match(techPattern) || []) {
-        skills.add(m.toLowerCase());
-      }
-    }
-  }
-
-  return Array.from(skills);
-}
-
-function calculateRequiredSkillsMatch(jobDescription: string, resumeText: string): number {
-  const required = extractRequiredSkills(jobDescription);
-  if (required.length === 0) return 70;
-
-  const plain = resumeToPlainText(resumeText, isLatexSource(resumeText));
-  let matched = 0;
-  for (const skill of required) {
-    if (plain.includes(skill)) matched++;
-  }
-  return Math.min(100, Math.round((matched / required.length) * 100));
-}
 
 function calculateStructureScore(resumeText: string): number {
   const plain = resumeToPlainText(resumeText, isLatexSource(resumeText)).toLowerCase();
@@ -92,8 +62,9 @@ export function calculateAtsScore(
   isLatex?: boolean
 ): AtsScoreResult {
   const resolvedLatex = isLatex ?? isLatexSource(resumeText);
-  const keywordScore = calculateMatchScore(jobDescription, resumeText);
-  const skillsScore = calculateRequiredSkillsMatch(jobDescription, resumeText);
+  const jdCoverage = priorityKeywordCoverage(jobDescription, resumeText);
+  const keywordScore = jdCoverage.percent;
+  const skillsScore = calculateMatchScore(jobDescription, resumeText);
   const structureScore = calculateStructureScore(resumeText);
   const parseScore = calculateParseQualityScore(resumeText);
   const metrics = validateBulletMetrics(resumeText, resolvedLatex);
@@ -109,11 +80,13 @@ export function calculateAtsScore(
   if ((plain.match(/\bdesigned\b/gi) || []).length >= 4) contentScore -= 10;
   contentScore = Math.max(0, contentScore);
 
+  // JD alignment is the primary signal — derived from this specific job description
+  const jdAlignment = Math.round(keywordScore * 0.7 + skillsScore * 0.3);
+
   const total = Math.round(
-    keywordScore * 0.3 +
-      skillsScore * 0.2 +
-      structureScore * 0.15 +
-      parseScore * 0.1 +
+    jdAlignment * 0.55 +
+      structureScore * 0.12 +
+      parseScore * 0.08 +
       measurableScore * 0.15 +
       contentScore * 0.1
   );
@@ -127,6 +100,9 @@ export function calculateAtsScore(
       parseScore,
       measurableScore,
       contentScore,
+      jdCoveragePercent: jdCoverage.percent,
+      jdKeywordsMatched: jdCoverage.matched,
+      jdKeywordsTotal: jdCoverage.total,
     },
   };
 }

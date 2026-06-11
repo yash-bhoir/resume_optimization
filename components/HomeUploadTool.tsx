@@ -87,6 +87,7 @@ export default function HomeUploadTool() {
   const [scorePreview, setScorePreview] = useState<{
     matchScoreBefore: number;
     atsScoreBefore: number;
+    jdKeywordCoverage?: { matched: number; total: number; percent: number };
     analysisBefore?: ResumeAnalysis;
   } | null>(null);
   const [upgradeOpen, setUpgradeOpen] = useState(false);
@@ -149,6 +150,7 @@ export default function HomeUploadTool() {
         setScorePreview({
           matchScoreBefore: data.matchScoreBefore,
           atsScoreBefore: data.atsScoreBefore,
+          jdKeywordCoverage: data.jdKeywordCoverage,
           analysisBefore: data.analysisBefore,
         });
       }
@@ -436,16 +438,24 @@ export default function HomeUploadTool() {
 
       {scorePreview && parsedText && (
         <div className="score-preview-panel" role="status">
-          <h3>Your ATS match preview</h3>
+          <h3>ATS match vs this job description</h3>
           <div className="score-preview-chips">
             <span className="stat-chip">
               <span className="stat-value">{scorePreview.matchScoreBefore}%</span>
-              <span className="stat-label">Keyword match</span>
+              <span className="stat-label">JD keywords</span>
             </span>
             <span className="stat-chip">
               <span className="stat-value">{scorePreview.atsScoreBefore}</span>
               <span className="stat-label">ATS score</span>
             </span>
+            {scorePreview.jdKeywordCoverage && scorePreview.jdKeywordCoverage.total > 0 && (
+              <span className="stat-chip">
+                <span className="stat-value">
+                  {scorePreview.jdKeywordCoverage.matched}/{scorePreview.jdKeywordCoverage.total}
+                </span>
+                <span className="stat-label">Terms matched</span>
+              </span>
+            )}
           </div>
           <p className="score-preview-hint">
             Sign in to optimize (uses 1 credit). Free: {pricingConfig.freeCreditsPerMonth}/month +

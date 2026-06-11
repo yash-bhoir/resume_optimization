@@ -44,7 +44,11 @@ export default function ScoreDashboard({
               {keywordGain}% job keyword alignment
             </span>
           )}
-          <span className="score-hint">Based on skills &amp; requirements from the job description</span>
+          <span className="score-hint">
+            {atsBreakdownAfter?.jdKeywordsTotal
+              ? `${atsBreakdownAfter.jdKeywordsMatched ?? 0} of ${atsBreakdownAfter.jdKeywordsTotal} JD keywords matched`
+              : "Based on skills & requirements from the job description"}
+          </span>
           <p className="score-disclaimer">
             Estimated scores — not from a real employer ATS. Use keyword coverage below to verify
             tailoring.
@@ -52,7 +56,7 @@ export default function ScoreDashboard({
         </div>
 
         <div className="score-card highlight">
-          <span className="score-label">ATS score (estimate)</span>
+          <span className="score-label">ATS score vs this job</span>
           <div className="score-values">
             <span className="score-before">{atsScoreBefore}%</span>
             <span className="score-arrow" aria-hidden>→</span>
@@ -94,8 +98,13 @@ export default function ScoreDashboard({
         <details className="ats-breakdown">
           <summary>Score breakdown after optimization</summary>
           <ul>
-            <li>JD keywords: {atsBreakdownAfter.keywordScore}%</li>
-            <li>Required skills: {atsBreakdownAfter.skillsScore}%</li>
+            <li>
+              JD keyword coverage: {atsBreakdownAfter.jdCoveragePercent ?? atsBreakdownAfter.keywordScore}%
+              {atsBreakdownAfter.jdKeywordsTotal
+                ? ` (${atsBreakdownAfter.jdKeywordsMatched}/${atsBreakdownAfter.jdKeywordsTotal} terms)`
+                : ""}
+            </li>
+            <li>JD term match: {atsBreakdownAfter.skillsScore}%</li>
             <li>Measurable bullets: {atsBreakdownAfter.measurableScore ?? "—"}%</li>
             <li>Word choice: {atsBreakdownAfter.contentScore ?? "—"}%</li>
             <li>Structure: {atsBreakdownAfter.structureScore}%</li>
