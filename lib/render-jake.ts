@@ -45,10 +45,11 @@ export function renderDocumentToJakeLatex(doc: ResumeDocument): string {
   if (doc.experience.length) {
     body += `\n\\section{Experience}\n  \\resumeSubHeadingListStart\n`;
     for (const job of doc.experience) {
-      body += `    \\resumeSubheading\n      {${esc(job.title)}}{${esc(job.startDate)} -- ${esc(job.endDate)}}\n      {${esc(job.company)}}{${esc(job.location)}}\n`;
+      body += `    \\resumeSubheading\n      {${esc(job.title)}}{${esc(job.startDate)} -- ${esc(job.endDate)}}\n      {${esc(job.company)}}{${esc(job.location)}}\n      \\resumeItemListStart\n`;
       for (const bullet of job.bullets) {
-        body += `      \\resumeItem{${esc(bullet)}}\n`;
+        body += `        \\resumeItem{${esc(bullet)}}\n`;
       }
+      body += `      \\resumeItemListEnd\n`;
     }
     body += `  \\resumeSubHeadingListEnd\n`;
   }
@@ -59,10 +60,11 @@ export function renderDocumentToJakeLatex(doc: ResumeDocument): string {
       const heading = p.techStack
         ? `\\textbf{${esc(p.name)}} $|$ \\emph{${esc(p.techStack)}}`
         : `\\textbf{${esc(p.name)}}`;
-      body += `      \\resumeProjectHeading\n          {${heading}}{${esc(p.date)}}\n`;
+      body += `      \\resumeProjectHeading\n          {${heading}}{${esc(p.date)}}\n          \\resumeItemListStart\n`;
       for (const bullet of p.bullets) {
-        body += `          \\resumeItem{${esc(bullet)}}\n`;
+        body += `            \\resumeItem{${esc(bullet)}}\n`;
       }
+      body += `          \\resumeItemListEnd\n`;
     }
     body += `    \\resumeSubHeadingListEnd\n`;
   }

@@ -1,5 +1,5 @@
 import { NextRequest } from "next/server";
-import { optimizeResumeDocument } from "@/lib/openai";
+import { optimizeResumeDocument, reflowResumeDocument } from "@/lib/openai";
 import {
   calculateMatchScore,
   calibrateOptimizedMatchScore,
@@ -90,6 +90,7 @@ export async function POST(request: NextRequest) {
         originalFileName,
         sessionId: clientSessionId,
         resumeDocument: clientDocument,
+        pageLayout,
       } = parsed.data;
 
       if (optimizationMode === "preserve") {
@@ -149,16 +150,39 @@ export async function POST(request: NextRequest) {
         true
       );
 
-      const optimizedDoc = await optimizeResumeDocument(originalDoc, trimmedJd);
+      const optimizedDoc = await optimizeResumeDocument(originalDoc, trimmedJd, pageLayout);
 
-      const renderResult = await renderOptimizedOutput(effectiveMode, format, optimizedDoc, {
+      let renderResult = await renderOptimizedOutput(effectiveMode, format, optimizedDoc, {
         originalFileBase64,
         originalTexSource: originalTexSource ?? (isBeforeLatex ? trimmedResume : undefined),
         originalDoc,
       });
 
-      const latexSource = renderResult.latexSource;
-      const afterPlain = documentToPlainText(optimizedDoc);
+      let latexSource = renderResult.latexSource;
+      let fit = estimatePageFitFromLatex(latexSource);
+      let finalDoc = optimizedDoc;
+
+      if (pageLayout === "single_page" && fit.pageCount > 1) {
+        finalDoc = await reflowResumeDocument(finalDoc, originalDoc, trimmedJd, "single_page");
+        renderResult = await renderOptimizedOutput(effectiveMode, format, finalDoc, {
+          originalFileBase64,
+          originalTexSource: originalTexSource ?? (isBeforeLatex ? trimmedResume : undefined),
+          originalDoc,
+        });
+        latexSource = renderResult.latexSource;
+        fit = estimatePageFitFromLatex(latexSource);
+      } else if (pageLayout === "balanced" && fit.issue === "underflow") {
+        finalDoc = await reflowResumeDocument(finalDoc, originalDoc, trimmedJd, "fill_page");
+        renderResult = await renderOptimizedOutput(effectiveMode, format, finalDoc, {
+          originalFileBase64,
+          originalTexSource: originalTexSource ?? (isBeforeLatex ? trimmedResume : undefined),
+          originalDoc,
+        });
+        latexSource = renderResult.latexSource;
+        fit = estimatePageFitFromLatex(latexSource);
+      }
+
+      const afterPlain = documentToPlainText(finalDoc);
 
       const scoreAfterRaw = calculateMatchScore(trimmedJd, afterPlain);
       const scoreAfter = calibrateOptimizedMatchScore(
@@ -196,7 +220,6 @@ export async function POST(request: NextRequest) {
 
       const changeItems = generateChangeLog(trimmedResume, latexSource, trimmedJd);
       const changeLog = generateFallbackChangeLog(trimmedResume, latexSource, trimmedJd);
-      const fit = estimatePageFitFromLatex(latexSource);
 
       creditReserved = false;
       const creditsAfter = userId ? await getCreditStatus(userId) : null;
@@ -229,7 +252,7 @@ export async function POST(request: NextRequest) {
             pageCount: fit.pageCount,
             analysisBefore,
             analysisAfter,
-            resumeDocument: optimizedDoc,
+            resumeDocument: finalDoc,
             preservedTexSource: renderResult.preservedTexSource,
             originalFileBase64: originalFileBase64,
             preservedDocxBase64: renderResult.preservedDocxBase64,
@@ -244,7 +267,7 @@ export async function POST(request: NextRequest) {
       return jsonOk({
         historyId,
         latexSource,
-        optimizedDocument: optimizedDoc,
+        optimizedDocument: finalDoc,
         matchScoreBefore: scoreBefore,
         matchScoreAfter: scoreAfter,
         atsScoreBefore: atsBefore.total,

@@ -26,7 +26,7 @@ export function estimatePageFitFromLatex(latexSource: string): PageFitResult {
     ratio,
     pageFit: 100,
     pageCount,
-    issue: ratio > 2.1 ? "overflow" : ratio < 0.5 ? "underflow" : "ok",
+    issue: ratio > 1.05 ? "overflow" : ratio < 0.72 ? "underflow" : "ok",
   };
 }
 
@@ -43,7 +43,7 @@ export function measureDomPageFit(container: HTMLElement | null): PageFitResult 
     ratio,
     pageFit: 100,
     pageCount,
-    issue: ratio > 2.1 ? "overflow" : ratio < 0.5 ? "underflow" : "ok",
+    issue: ratio > 1.05 ? "overflow" : ratio < 0.72 ? "underflow" : "ok",
   };
 }
 

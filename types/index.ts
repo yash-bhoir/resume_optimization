@@ -2,6 +2,9 @@ export type DetectedFormat = "pdf" | "docx" | "txt" | "tex" | "image" | "unknown
 
 export type OptimizationMode = "preserve" | "template";
 
+/** How to adjust resume length after optimization. */
+export type PageLayoutMode = "balanced" | "single_page" | "fill_page";
+
 export type { ResumeDocument } from "@/types/resume-document";
 
 export interface ParseResumeResponse {

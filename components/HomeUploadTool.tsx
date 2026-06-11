@@ -6,6 +6,7 @@ import { useAuth, useClerk } from "@clerk/nextjs";
 import FileUpload from "@/components/FileUpload";
 import JobDescriptionInput, { isJobDescriptionReady } from "@/components/JobDescriptionInput";
 import OptimizationModeSelector from "@/components/OptimizationModeSelector";
+import PageLayoutSelector from "@/components/PageLayoutSelector";
 import ProgressIndicator from "@/components/ProgressIndicator";
 import StepIndicator from "@/components/StepIndicator";
 import LoadingOverlay from "@/components/LoadingOverlay";
@@ -25,7 +26,7 @@ import {
 import { getPreserveLayoutNote } from "@/lib/preserve-layout-utils";
 import { validateJobDescriptionClient } from "@/lib/client-validation";
 import { fileToBase64 } from "@/lib/file-base64";
-import type { DetectedFormat, OptimizationMode, OptimizeStep } from "@/types";
+import type { DetectedFormat, OptimizationMode, OptimizeStep, PageLayoutMode } from "@/types";
 import type { ResumeAnalysis } from "@/types";
 import ParseReviewPanel, { reparseTextToDocument } from "@/components/ParseReviewPanel";
 import type { ResumeDocument } from "@/types/resume-document";
@@ -78,6 +79,7 @@ export default function HomeUploadTool() {
   const [preserveLayoutNote, setPreserveLayoutNote] = useState<string | undefined>();
   const [scannedWarning, setScannedWarning] = useState<string | undefined>();
   const [optimizationMode, setOptimizationMode] = useState<OptimizationMode>("template");
+  const [pageLayout, setPageLayout] = useState<PageLayoutMode>("balanced");
   const [jobDescription, setJobDescription] = useState("");
   const [step, setStep] = useState<OptimizeStep>("idle");
   const optimizeProgressHint = useOptimizeProgress(step === "optimizing");
@@ -279,6 +281,7 @@ export default function HomeUploadTool() {
               ? { originalFileBase64: preserveFileBase64 }
               : {}),
             resumeDocument,
+            pageLayout,
           }),
         });
       } catch (fetchErr) {
@@ -491,6 +494,7 @@ export default function HomeUploadTool() {
           isSignedIn={isLoaded && isSignedIn}
           onChange={setOptimizationMode}
         />
+        <PageLayoutSelector value={pageLayout} onChange={setPageLayout} disabled={isLoading} />
         </>
       )}
 

@@ -30,6 +30,13 @@ import {
   parseOptimizedDocumentJson,
   validateDocument,
 } from "./resume-schema";
+import {
+  buildDocumentCompletenessRetryPrompt,
+  finalizeResumeDocument,
+  validateDocumentCompleteness,
+} from "./resume-document-normalize";
+import { applyPageLayoutToDocument } from "./resume-page-layout";
+import type { PageLayoutMode } from "@/types";
 
 const TIMEOUT_MS = 60000;
 const MAX_RETRIES = 2;
@@ -182,7 +189,8 @@ export async function optimizeResume(
 
 export async function optimizeResumeDocument(
   doc: ResumeDocument,
-  jobDescription: string
+  jobDescription: string,
+  pageLayout: PageLayoutMode = "balanced"
 ): Promise<ResumeDocument> {
   const prompt = buildDocumentOptimizePrompt(doc, jobDescription);
   let raw = await callWithRetry(DOCUMENT_SYSTEM_PROMPT, prompt);
@@ -198,6 +206,18 @@ export async function optimizeResumeDocument(
     throw new Error("Failed to parse optimized resume JSON from AI");
   }
 
+  optimized = finalizeResumeDocument(doc, optimized);
+
+  const completeness = validateDocumentCompleteness(doc, optimized);
+  if (!completeness.ok) {
+    const retryPrompt = `${prompt}\n\n${buildDocumentCompletenessRetryPrompt(completeness.issues)}`;
+    raw = await callWithRetry(DOCUMENT_SYSTEM_PROMPT, retryPrompt);
+    const retryDoc = parseOptimizedDocumentJson(raw);
+    if (retryDoc && validateDocument(retryDoc)) {
+      optimized = finalizeResumeDocument(doc, retryDoc);
+    }
+  }
+
   optimized.contact = normalizeContact(optimized.contact);
   optimized.rawPlainText = documentToPlainText(optimized);
 
@@ -207,7 +227,7 @@ export async function optimizeResumeDocument(
     raw = await callWithRetry(DOCUMENT_SYSTEM_PROMPT, retryPrompt);
     const retryDoc = parseOptimizedDocumentJson(raw);
     if (retryDoc && validateDocument(retryDoc)) {
-      optimized = retryDoc;
+      optimized = finalizeResumeDocument(doc, retryDoc);
       optimized.contact = normalizeContact(optimized.contact);
       optimized.rawPlainText = documentToPlainText(optimized);
     }
@@ -219,26 +239,41 @@ export async function optimizeResumeDocument(
     raw = await callWithRetry(DOCUMENT_SYSTEM_PROMPT, retryPrompt);
     const retryDoc = parseOptimizedDocumentJson(raw);
     if (retryDoc && validateDocument(retryDoc)) {
-      optimized = retryDoc;
+      optimized = finalizeResumeDocument(doc, retryDoc);
       optimized.contact = normalizeContact(optimized.contact);
       optimized.rawPlainText = documentToPlainText(optimized);
     }
   }
 
-  if (doc.experience.length > 0 && optimized.experience.length < doc.experience.length) {
-    optimized.experience = doc.experience.map((job, i) => ({
-      ...job,
-      ...optimized.experience[i],
-      bullets: optimized.experience[i]?.bullets?.length
-        ? optimized.experience[i].bullets
-        : job.bullets,
-    }));
+  if (pageLayout !== "balanced") {
+    optimized = await applyPageLayoutToDocument(
+      optimized,
+      doc,
+      jobDescription,
+      pageLayout,
+      callWithRetry
+    );
+    optimized = finalizeResumeDocument(doc, optimized);
+    optimized.contact = normalizeContact(optimized.contact);
     optimized.rawPlainText = documentToPlainText(optimized);
   }
 
   return optimized;
 }
 
-export function getActiveModel(): string {
-  return MODEL;
+export async function reflowResumeDocument(
+  doc: ResumeDocument,
+  original: ResumeDocument,
+  jobDescription: string,
+  pageLayout: PageLayoutMode
+): Promise<ResumeDocument> {
+  if (pageLayout === "balanced") return doc;
+  const adjusted = await applyPageLayoutToDocument(
+    doc,
+    original,
+    jobDescription,
+    pageLayout,
+    callWithRetry
+  );
+  return finalizeResumeDocument(original, adjusted);
 }

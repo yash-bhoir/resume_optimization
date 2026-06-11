@@ -44,6 +44,19 @@ interface OptimizedResumePanelProps {
 
   originalFileName?: string;
 
+  pageCount?: number;
+
+  resumeDocument?: import("@/types/resume-document").ResumeDocument;
+
+  rawText?: string;
+
+  onReflowComplete?: (payload: {
+    latexSource: string;
+    pageCount: number;
+    resumeDocument?: import("@/types/resume-document").ResumeDocument;
+    preservedDocxBase64?: string;
+  }) => void;
+
 }
 
 
@@ -107,6 +120,8 @@ export default function OptimizedResumePanel({
 
   onPageFitChange,
 
+  jobDescription,
+
   onReoptimize,
 
   effectiveMode = "template",
@@ -118,6 +133,14 @@ export default function OptimizedResumePanel({
   layoutNote,
 
   originalFileName,
+
+  pageCount = 1,
+
+  resumeDocument,
+
+  rawText,
+
+  onReflowComplete,
 
 }: OptimizedResumePanelProps) {
 
@@ -132,6 +155,8 @@ export default function OptimizedResumePanel({
   const [renderError, setRenderError] = useState(false);
 
   const [html, setHtml] = useState("");
+
+  const [reflowing, setReflowing] = useState(false);
 
   const [downloading, setDownloading] = useState<string | null>(null);
   const [upgradeOpen, setUpgradeOpen] = useState(false);
@@ -332,6 +357,48 @@ export default function OptimizedResumePanel({
 
 
 
+  const handleReflow = async (layout: "single_page" | "fill_page") => {
+    if (!resumeDocument) {
+      alert("Re-optimize to enable page layout adjustments.");
+      return;
+    }
+    setReflowing(true);
+    try {
+      const res = await fetch("/api/resume/reflow", {
+        method: "POST",
+        credentials: "same-origin",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          resumeDocument,
+          jobDescription,
+          pageLayout: layout,
+          optimizationMode: effectiveMode,
+          ...(rawText ? { rawText } : {}),
+          ...(preservedDocxBase64 ? { originalFileBase64: preservedDocxBase64 } : {}),
+          ...(preservedTexSource ? { originalTexSource: preservedTexSource } : {}),
+        }),
+      });
+      const payload = await res.json();
+      if (!res.ok) {
+        throw new Error(payload.error || "Page layout adjustment failed");
+      }
+      onLatexChange(payload.latexSource);
+      onPageFitChange(payload.pageFit, payload.pageCount);
+      onReflowComplete?.({
+        latexSource: payload.latexSource,
+        pageCount: payload.pageCount,
+        resumeDocument: payload.optimizedDocument,
+        preservedDocxBase64: payload.preservedDocxBase64,
+      });
+    } catch (err) {
+      alert(err instanceof Error ? err.message : "Could not adjust layout");
+    } finally {
+      setReflowing(false);
+    }
+  };
+
+
+
   return (
 
     <div className="compare-panel">
@@ -359,6 +426,28 @@ export default function OptimizedResumePanel({
             Optimize another job
 
           </button>
+
+          {resumeDocument && pageCount > 1 && (
+            <button
+              type="button"
+              className="btn btn-secondary btn-sm"
+              disabled={reflowing}
+              onClick={() => handleReflow("single_page")}
+            >
+              {reflowing ? "Adjusting…" : "Fit to 1 page"}
+            </button>
+          )}
+
+          {resumeDocument && pageCount <= 1 && (
+            <button
+              type="button"
+              className="btn btn-secondary btn-sm"
+              disabled={reflowing}
+              onClick={() => handleReflow("fill_page")}
+            >
+              {reflowing ? "Adjusting…" : "Fill page"}
+            </button>
+          )}
 
           <span className={`mode-badge ${isPreserve ? "preserve" : "template"}`}>
 

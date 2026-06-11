@@ -42,6 +42,7 @@ export const optimizeRequestSchema = z.object({
   originalFileName: z.string().max(LIMITS.FILENAME_MAX).optional(),
   sessionId: z.string().uuid().optional(),
   resumeDocument: z.unknown().optional(),
+  pageLayout: z.enum(["balanced", "single_page", "fill_page"]).optional().default("balanced"),
 });
 
 export const latexExportSchema = z.object({

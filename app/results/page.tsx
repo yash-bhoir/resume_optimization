@@ -94,6 +94,33 @@ export default function ResultsPage() {
     updateSessionInStorage({ pageFit: fit, pageCount: pages || pageCount });
   };
 
+  const handleReflowComplete = (payload: {
+    latexSource: string;
+    pageCount: number;
+    resumeDocument?: StoredSessionPayload["resumeDocument"];
+    preservedDocxBase64?: string;
+  }) => {
+    const updated = {
+      ...data,
+      latexSource: payload.latexSource,
+      pageCount: payload.pageCount,
+      ...(payload.resumeDocument ? { resumeDocument: payload.resumeDocument } : {}),
+      ...(payload.preservedDocxBase64
+        ? { preservedDocxBase64: payload.preservedDocxBase64 }
+        : {}),
+    };
+    setData(updated);
+    setPageCount(payload.pageCount);
+    updateSessionInStorage({
+      latexSource: payload.latexSource,
+      pageCount: payload.pageCount,
+      ...(payload.resumeDocument ? { resumeDocument: payload.resumeDocument } : {}),
+      ...(payload.preservedDocxBase64
+        ? { preservedDocxBase64: payload.preservedDocxBase64 }
+        : {}),
+    });
+  };
+
   const compareData = {
     rawText: data.rawText,
     latexSource: data.latexSource,
@@ -233,6 +260,10 @@ export default function ResultsPage() {
                     preservedTexSource={data.preservedTexSource}
                     layoutNote={data.layoutNote}
                     originalFileName={data.originalFileName}
+                    pageCount={pageCount}
+                    resumeDocument={data.resumeDocument}
+                    rawText={data.rawText}
+                    onReflowComplete={handleReflowComplete}
                   />
                 </div>
               ) : (
