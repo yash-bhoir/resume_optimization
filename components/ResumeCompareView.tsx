@@ -122,7 +122,6 @@ export default function ResumeCompareView({ data, fullPage = false }: ResumeComp
             >
               <OptimizedResumePreview
                 latexSource={data.latexSource}
-                preferPdf
                 effectiveMode={data.effectiveMode}
                 preservedDocxBase64={data.preservedDocxBase64}
                 fileName={getOptimizedFileName(data.originalFileName, "docx")}
